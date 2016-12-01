@@ -1,32 +1,40 @@
 <template lang="html">
     <header id="header">
-        HEADER
+        <h1>Jeyffrey</h1>
+        <ul class="breadcrumbs" v-if="breadcrumbs" v-for="item in breadcrumbs">
+            <li>
+                <router-link
+                     v-if="item.link"
+                     :to="{ name: item.link }">{{item.titre}}</router-link>
+                <span
+                    v-else>{{item.titre}}</span>
+            </li>
+        </ul>
     </header>
 </template>
 
 <script>
-    import Store from '../../utils/store.js'
+    import store from '../../utils/store.js'
 
     export default {
         name: 'entete',
+        data () {
+            return {
+                state: store.state.projets
+            }
+        },
+        computed: {
+            breadcrumbs () {
+                return this.state.breadcrumbs
+            },
+        },
         watch: {
-            $route (route) {
-                this.breadcrumbs(route)
+            page () {
+                console.log(this.page)
             }
         },
-        created () {
-            this.breadcrumbs(this.$route)
-
-            console.log( Store )
-        },
-        methods: {
-            breadcrumbs ($route) {
-                console.log($route)
-
-                if( $route.name === 'projet-single' ) {
-                    console.log( $route.params.nom )
-                }
-            }
+        mounted () {
+            console.log(this.$route)
         }
     }
 </script>

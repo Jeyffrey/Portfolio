@@ -1,8 +1,5 @@
 <template lang="html">
     <ul id="projets">
-        <p>Chargement des projets : {{ etat }}</p>
-        <pre v-if="etat">{{ projets }}</pre>
-
         <li v-for="projet in projets">
             <h3>{{ projet.Nom }}</h3>
             <p v-if="projet.CaseStudy">
@@ -21,28 +18,24 @@
 </template>
 
 <script>
-    import Store from '../../utils/store.js'
-    let store = new Store()
+    import store from '../../utils/store.js'
 
     export default {
         name: 'liste-projets',
         data () {
             return {
-                state: store.state,
+                state: store.state.projets,
                 slug: this.$route.params.slug
             }
         },
         computed: {
-            etat () {
-                return store.state.etat
-            },
             projets () {
-                return store.state.projets
+                return this.state.projets
             }
         },
         created () {
             setTimeout( () => {
-                store.fecthProjets()
+                store.fetchProjets()
             }, 100)
         },
     }

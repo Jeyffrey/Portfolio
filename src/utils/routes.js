@@ -3,17 +3,28 @@ import VueRouter from 'vue-router';
 Vue.use(VueRouter);
 
 export default new VueRouter({
-  mode: 'history',
-  routes: [
-    {
-        path: '/projets/:slug',
-        name: 'projet-single',
-        component: require('../components/pages/Projet-Single.vue')
-    },
-    {
-        path: '/',
-        name: 'projets',
-        component: require('../components/pages/Projets-Category.vue')
-    }
-  ]
+    mode: 'history',
+    routes: [
+        /* A propos */
+        {
+            path: '/a-propos',
+            name: 'a-propos',
+            component: require('../components/pages/Apropos-Category.vue')
+        },
+        /* Projets */
+        {
+            path: '/projets/:slug',
+            name: 'projet-single',
+            component: require('../components/pages/Projet-Single.vue')
+        },
+        {
+            path: '/projets',
+            redirect: '/',
+        },
+        {
+            path: '/',
+            name: 'projets',
+            component: require('../components/pages/Projets-Category.vue')
+        }
+    ]
 })
