@@ -1,20 +1,23 @@
 <template lang="html">
-    <ul id="projets">
-        <li v-for="projet in projets">
-            <h3>{{ projet.Nom }}</h3>
-            <p v-if="projet.CaseStudy">
-                <router-link :to="{ name: 'projet-single', params: { slug: projet.Slug }}">En savoir plus</router-link>
-            </p>
+    <section id="projets-category">
+        <div class="wrapper">
+            <article v-for="projet in projets" class="item-projet">
+                <div class="item-projet--visuel" v-for="(value, key) in projet.Visuel" v-if="key=='path'">
+                    <img :src="value" alt="">
+                </div>
 
-            <p v-else>
-                <a :href="projet.URL" target="_blank">Visiter le site</a>
-            </p>
+                <h3 class="item-projet--titre">{{ projet.Nom }}</h3>
 
-            <div v-for="(value, key) in projet.Visuel" v-if="key=='path'">
-                <img :src="value" alt="">
-            </div>
-        </li>
-    </ul>
+                <ul class="item-projet--tags">
+                    <li v-for="tag in projet.Tags">{{tag}}</li>
+                </ul>
+
+                <router-link class="item-projet--lien" v-if="projet.CaseStudy" :to="{ name: 'projet-single', params: { slug: projet.Slug }}">En savoir plus</router-link>
+
+                <a class="item-projet--lien external" v-else :href="projet.URL" target="_blank">Visiter le site</a>
+            </article>
+        </div>
+    </section>
 </template>
 
 <script>

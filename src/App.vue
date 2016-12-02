@@ -1,10 +1,17 @@
 <template>
     <div id="app">
         <p>Chargement a-propos : {{ etat }}</p>
-        <pre v-if="etat">{{ state }}</pre>
+        <!-- <pre v-if="etat">{{ state }}</pre> -->
 
         <entete></entete>
-        <router-view></router-view>
+
+        <main id="main">
+
+            <transition name="fade" mode="out-in" appear>
+                <router-view></router-view>
+            </transition>
+
+        </main>
     </div>
 </template>
 
@@ -18,7 +25,7 @@
         components: { entete },
         data () {
             return {
-                state: store.state.apropos,
+                state: store.state.projets,
             }
         },
         computed: {
@@ -28,3 +35,7 @@
         },
     }
 </script>
+
+<style lang="scss">
+    @import './scss/main.scss';
+</style>
