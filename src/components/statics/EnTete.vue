@@ -1,15 +1,37 @@
 <template lang="html">
     <header id="header">
-        <h1>Jeyffrey</h1>
-        <ul class="breadcrumbs" v-if="breadcrumbs" v-for="item in breadcrumbs">
-            <li>
-                <router-link
-                     v-if="item.link"
-                     :to="{ name: item.link }">{{item.titre}}</router-link>
-                <span
+        <div class="header--breadcrumbs">
+            <div class="header--titre-site">
+                <h1>
+                    <router-link v-if="breadcrumbs" :to="{ name: 'projets' }">Jeyffrey</router-link>
+                    <span v-else>Jeyffrey</span>
+                </h1>
+            </div>
+
+            <transition-group tag="ol" v-if="breadcrumbs">
+                <li class="list-complete-item" v-for="(item, index) in breadcrumbs" key="{{item.titre}}">
+                    <router-link
+                    v-if="item.link"
+                    :to="{ name: item.link }">{{item.titre}}</router-link>
+                    <span
                     v-else>{{item.titre}}</span>
-            </li>
-        </ul>
+                </li>
+            </transition-group>
+        </div>
+
+        <div class="header--menu">
+            <ul>
+                <li class="header--menu-item">
+                    <router-link :to="{ name: 'projets' }">Projets</router-link>
+                </li>
+                <li class="header--menu-item">
+                    <router-link :to="{ name: 'a-propos' }">À propos</router-link>
+                </li>
+                <li class="header--menu-item">
+                    <router-link :to="{ name: 'contact' }">Contact</router-link>
+                </li>
+            </ul>
+        </div>
     </header>
 </template>
 
@@ -20,21 +42,13 @@
         name: 'entete',
         data () {
             return {
-                state: store.state.projets
+                state: store.state
             }
         },
         computed: {
             breadcrumbs () {
                 return this.state.breadcrumbs
             },
-        },
-        watch: {
-            page () {
-                console.log(this.page)
-            }
-        },
-        mounted () {
-            console.log(this.$route)
         }
     }
 </script>

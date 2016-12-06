@@ -3,14 +3,12 @@ import Vue from 'vue'
 class Store {
     constructor () {
         this.state = {
+            etat: false,
+            breadcrumbs: false,
             projets: {
-                etat: false,
-                breadcrumbs: false,
                 projets: []
             },
             apropos: {
-                etat: false,
-                breadcrumbs: false,
                 articles: []
             }
         }
@@ -19,21 +17,21 @@ class Store {
     /* PROJETS */
     fetchProjets () {
         Vue.http.get('/cockpit/api/collections/get/Projets?token=6a20e85e541cfa4e3b516ea4bfe5af').then((response) => {
-            this.state.projets.etat = true
+            this.state.etat = true
             this.state.projets.projets = response.data.entries
-            this.state.projets.breadcrumbs = false
+            this.state.breadcrumbs = false
         });
     }
 
     specificProjet ( slug ) {
         Vue.http.get('/cockpit/api/collections/get/Projets?token=6a20e85e541cfa4e3b516ea4bfe5af').then((response) => {
-            this.state.projets.etat = true
+            this.state.etat = true
 
             this.state.projets.projets = response.data.entries.filter( function($el){
                 return $el.Slug === slug
             });
 
-            this.state.projets.breadcrumbs = {
+            this.state.breadcrumbs = {
                 0: {
                     titre: 'Projets',
                     link: 'projets'
@@ -49,9 +47,34 @@ class Store {
     /* PROJETS */
     fetchApropos () {
         Vue.http.get('/cockpit/api/collections/get/Apropos?token=6a20e85e541cfa4e3b516ea4bfe5af').then((response) => {
-            this.state.apropos.etat = true
+            this.state.etat = true
             this.state.apropos.articles = response.data.entries
-            this.state.apropos.breadcrumbs = false
+            this.state.breadcrumbs = {
+                0: {
+                    titre: 'A propos'
+                }
+            }
+        });
+    }
+
+    specificApropos ( slug ) {
+        Vue.http.get('/cockpit/api/collections/get/Apropos?token=6a20e85e541cfa4e3b516ea4bfe5af').then((response) => {
+            this.state.etat = true
+
+            this.state.apropos.articles = response.data.entries.filter( function($el){
+                return $el.Slug === slug
+            });
+
+            this.state.breadcrumbs = {
+                0: {
+                    titre: 'A propos',
+                    link: 'a-propos'
+                },
+                1: {
+                    titre: this.state.apropos.articles[0].Titre,
+                    link: false
+                }
+            }
         });
     }
 }

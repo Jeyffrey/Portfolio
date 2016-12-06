@@ -1,9 +1,9 @@
 <template>
     <div id="app">
-        <p>Chargement a-propos : {{ etat }}</p>
-        <!-- <pre v-if="etat">{{ state }}</pre> -->
-
         <entete></entete>
+
+        <!-- <p>Chargement a-propos : {{ etat }}</p>
+        <pre v-if="etat">{{ state }}</pre> -->
 
         <main id="main">
 
@@ -25,14 +25,14 @@
         components: { entete },
         data () {
             return {
-                state: store.state.projets,
+                state: store.state,
             }
         },
         computed: {
             etat () {
                 return this.state.etat
             }
-        },
+        }
     }
 </script>
 
