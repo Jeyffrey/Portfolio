@@ -8,27 +8,29 @@
                 </h1>
             </div>
 
-            <transition-group tag="ol" v-if="breadcrumbs">
-                <li class="list-complete-item" v-for="(item, index) in breadcrumbs" key="{{item.titre}}">
-                    <router-link
-                    v-if="item.link"
-                    :to="{ name: item.link }">{{item.titre}}</router-link>
-                    <span
-                    v-else>{{item.titre}}</span>
-                </li>
-            </transition-group>
+            <transition name="breadcrumbs" mode="out-in" appear>
+                <ol v-if="breadcrumbs">
+                    <li class="list-complete-item" v-for="(item, index) in breadcrumbs" key="{{item.titre}}">
+                        <router-link
+                        v-if="item.link"
+                        :to="{ name: item.link }">{{item.titre}}</router-link>
+                        <span
+                        v-else>{{item.titre}}</span>
+                    </li>
+                </ol>
+            </transition>
         </div>
 
         <div class="header--menu">
             <ul>
-                <li class="header--menu-item">
-                    <router-link :to="{ name: 'projets' }">Projets</router-link>
+                <li class="header--menu-item projets">
+                    <router-link :to="{ name: 'projets' }" exact>Projets</router-link>
                 </li>
                 <li class="header--menu-item">
-                    <router-link :to="{ name: 'a-propos' }">À propos</router-link>
+                    <router-link :to="{ name: 'a-propos' }" exact>À propos</router-link>
                 </li>
                 <li class="header--menu-item">
-                    <router-link :to="{ name: 'contact' }">Contact</router-link>
+                    <router-link :to="{ name: 'contact' }" exact>Contact</router-link>
                 </li>
             </ul>
         </div>

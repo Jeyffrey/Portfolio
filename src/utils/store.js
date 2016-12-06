@@ -56,27 +56,6 @@ class Store {
             }
         });
     }
-
-    specificApropos ( slug ) {
-        Vue.http.get('/cockpit/api/collections/get/Apropos?token=6a20e85e541cfa4e3b516ea4bfe5af').then((response) => {
-            this.state.etat = true
-
-            this.state.apropos.articles = response.data.entries.filter( function($el){
-                return $el.Slug === slug
-            });
-
-            this.state.breadcrumbs = {
-                0: {
-                    titre: 'A propos',
-                    link: 'a-propos'
-                },
-                1: {
-                    titre: this.state.apropos.articles[0].Titre,
-                    link: false
-                }
-            }
-        });
-    }
 }
 
 let store = new Store ();

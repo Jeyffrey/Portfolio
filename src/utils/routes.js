@@ -13,14 +13,9 @@ export default new VueRouter({
         },
         /* A propos */
         {
-            path: '/a-propos/:slug',
-            name: 'a-propos-single',
-            component: require('../components/pages/Apropos-Single.vue')
-        },
-        {
             path: '/a-propos',
             name: 'a-propos',
-            component: require('../components/pages/Apropos-Category.vue')
+            component: require('../components/pages/A-propos.vue')
         },
         /* Projets */
         {

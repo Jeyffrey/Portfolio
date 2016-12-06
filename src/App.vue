@@ -7,11 +7,21 @@
 
         <main id="main">
 
-            <transition name="fade" mode="out-in" appear>
+            <transition name="skew" mode="out-in" appear>
                 <router-view></router-view>
             </transition>
 
         </main>
+
+        <footer id="footer">
+            <p>
+                Site développé avec ♥
+                à l'aide de
+                <a href="https://github.com/COCOPi/cockpit/" target="_blank">Cockpit Next</a> <small>(API-first CMS)</small> et
+                <a href="https://vuejs.org/" target="_blank">Vue JS</a> <small>(Javascript Framework)</small>
+            </p>
+            <p>&copy;&nbsp;2016 - Geoffroy Begouaussel</p>
+        </footer>
     </div>
 </template>
 

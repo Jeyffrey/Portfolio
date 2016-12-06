@@ -28,7 +28,8 @@
         data () {
             return {
                 state: store.state.projets,
-                slug: this.$route.params.slug
+                slug: this.$route.params.slug,
+                etat: false
             }
         },
         computed: {
@@ -40,6 +41,6 @@
             setTimeout( () => {
                 store.fetchProjets()
             }, 100)
-        },
+        }
     }
 </script>
