@@ -12,9 +12,9 @@
                     <li v-for="tag in projet.Tags">{{tag}}</li>
                 </ul>
 
-                <router-link class="item-projet--lien" v-if="projet.CaseStudy" :to="{ name: 'projet-single', params: { slug: projet.Slug }}">En savoir plus</router-link>
+                <router-link class="bouton" v-if="projet.CaseStudy" :to="{ name: 'projet-single', params: { slug: projet.Slug }}">En savoir plus</router-link>
 
-                <a class="item-projet--lien external" v-else :href="projet.URL" target="_blank">Visiter le site</a>
+                <a class="bouton external" v-else :href="projet.URL" target="_blank">Visiter le site</a>
             </article>
         </div>
     </section>

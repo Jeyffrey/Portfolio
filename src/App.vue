@@ -1,5 +1,5 @@
 <template>
-    <div id="app">
+    <div id="app" class="fx">
         <entete></entete>
 
         <!-- <p>Chargement a-propos : {{ etat }}</p>
@@ -42,6 +42,9 @@
             etat () {
                 return this.state.etat
             }
+        },
+        mounted () {
+            console.log('%c Fichiers du site → https://github.com/Jeyffrey/Portfolio ', 'background: #515ee1; color: #bada55; padding: 5px;');
         }
     }
 </script>

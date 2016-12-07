@@ -1,11 +1,9 @@
 <template lang="html">
-    <main id="main">
-        <router-link :to="{ name: 'projets' }">Retour aux projets</router-link>
-
+    <main id="main" class="contenu-single single">
         <div v-for="projet in projets">
-            <h3>{{ projet.Nom }}</h3>
+            <h1>{{ projet.Nom }}</h1>
             <p>
-                <a :href="projet.URL" target="_blank">Visiter le site</a>
+                <a :href="projet.URL" class="bouton external" target="_blank">Visiter le site</a>
             </p>
             <div class="contenu" v-html="content"></div>
         </div>
