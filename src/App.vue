@@ -5,23 +5,24 @@
         <!-- <p>Chargement a-propos : {{ etat }}</p>
         <pre v-if="etat">{{ state }}</pre> -->
 
-        <main id="main">
+
+            <main id="main">
+                <transition name="skew" mode="out-in" appear>
+                    <router-view></router-view>
+                </transition>
+            </main>
 
             <transition name="skew" mode="out-in" appear>
-                <router-view></router-view>
+                <footer id="footer">
+                    <p>
+                        Site développé avec ♥ à l'aide de
+                        <a href="https://github.com/COCOPi/cockpit/" target="_blank">Cockpit Next</a> <small>(API-first CMS)</small> et
+                        <a href="https://vuejs.org/" target="_blank">Vue JS</a> <small>(Javascript Framework)</small>
+                    </p>
+                    <p>&copy;&nbsp;2016 - Geoffroy Begouaussel - <a href="mailto:jeyffrey@gmail.com">jeyffrey@gmail.com</a></p>
+                </footer>
             </transition>
 
-        </main>
-
-        <footer id="footer">
-            <p>
-                Site développé avec ♥
-                à l'aide de
-                <a href="https://github.com/COCOPi/cockpit/" target="_blank">Cockpit Next</a> <small>(API-first CMS)</small> et
-                <a href="https://vuejs.org/" target="_blank">Vue JS</a> <small>(Javascript Framework)</small>
-            </p>
-            <p>&copy;&nbsp;2016 - Geoffroy Begouaussel</p>
-        </footer>
     </div>
 </template>
 

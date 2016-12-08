@@ -30,7 +30,10 @@
                     <router-link :to="{ name: 'a-propos' }" exact>À propos</router-link>
                 </li>
                 <li class="header--menu-item">
-                    <router-link :to="{ name: 'contact' }" exact>Contact</router-link>
+                    <a href="mailto:jeyffrey@gmail.com">Contact</a>
+                </li>
+                <li class="header--menu-item twitter">
+                    <a href="https://twitter.com/Jeyffrey" target="_blank"></a>
                 </li>
             </ul>
         </div>

@@ -5,12 +5,6 @@ Vue.use(VueRouter);
 export default new VueRouter({
     mode: 'history',
     routes: [
-        /* Contact */
-        {
-            path: '/contact',
-            name: 'contact',
-            component: require('../components/pages/Contact.vue')
-        },
         /* A propos */
         {
             path: '/a-propos',

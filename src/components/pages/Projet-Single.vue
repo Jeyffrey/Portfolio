@@ -1,11 +1,17 @@
 <template lang="html">
     <main id="main" class="contenu-single single">
         <div v-for="projet in projets">
-            <h1>{{ projet.Nom }}</h1>
+            <h1 class="single--titre">{{ projet.Nom }}</h1>
             <p>
-                <a :href="projet.URL" class="bouton external" target="_blank">Visiter le site</a>
+                <a :href="projet.URL" class="bouton external lien-projet" target="_blank">Visiter le site</a>
             </p>
             <div class="contenu" v-html="content"></div>
+
+            <ul class="projet-galerie">
+                <li v-for="image in projet.Galerie">
+                    <img :src="'/' + image.path" :alt="image.meta.title">
+                </li>
+            </ul>
         </div>
     </main>
 </template>
