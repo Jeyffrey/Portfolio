@@ -1,5 +1,5 @@
 <template>
-    <div id="app" class="fx">
+    <div id="app" class="fx" :class="{ready: etat}">
         <entete></entete>
 
         <!-- <p>Chargement a-propos : {{ etat }}</p>
@@ -12,17 +12,15 @@
                 </transition>
             </main>
 
-            <transition name="skew" mode="out-in" appear>
-                <footer id="footer">
-                    <p>
-                        Site développé avec ♥ à l'aide de
-                        <a href="https://github.com/COCOPi/cockpit/" target="_blank">Cockpit Next</a> <small>(API-first CMS)</small> et
-                        <a href="https://vuejs.org/" target="_blank">Vue JS</a> <small>(Javascript Framework)</small>
-                    </p>
-                    <p>&copy;&nbsp;2016 - Geoffroy Begouaussel - <a href="mailto:jeyffrey@gmail.com">jeyffrey@gmail.com</a></p>
-                </footer>
-            </transition>
 
+            <footer id="footer">
+                <p>
+                    Site développé avec ♥ à l'aide de
+                    <a href="https://github.com/COCOPi/cockpit/" target="_blank">Cockpit Next</a> <small>(API-first CMS)</small> et
+                    <a href="https://vuejs.org/" target="_blank">Vue JS</a> <small>(Javascript Framework)</small>
+                </p>
+                <p>&copy;&nbsp;2016 - Geoffroy Begouaussel - <a href="mailto:jeyffrey@gmail.com">jeyffrey@gmail.com</a></p>
+            </footer>
     </div>
 </template>
 
@@ -37,6 +35,11 @@
         data () {
             return {
                 state: store.state,
+            }
+        },
+        watch: {
+            $route () {
+                return this.state.etat = false
             }
         },
         computed: {

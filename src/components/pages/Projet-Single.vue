@@ -32,9 +32,7 @@
             content () { return this.projets[0].Contenu }
         },
         created () {
-            setTimeout( () => {
-                store.specificProjet( this.slug )
-            }, 100)
+            store.specificProjet( this.slug )
         }
     }
 </script>
