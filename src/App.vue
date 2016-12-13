@@ -27,6 +27,7 @@
 
 <script>
     import store from './utils/store.js'
+    import jump from './utils/smoothscroll.js'
     import entete from './components/statics/EnTete.vue'
 
     export default {
@@ -46,6 +47,22 @@
             etat () {
                 return this.state.etat
             }
+        },
+        created () {
+            this.$router.beforeEach((to, from, next) => {
+                var currentScroll = document.documentElement.scrollTop || document.body.scrollTop
+
+                if(currentScroll > 0) {
+                    jump('#header', {
+                        duration: 250,
+                        callback: function() {
+                            next()
+                        }
+                    })
+                } else {
+                    next()
+                }
+            });
         },
         mounted () {
             console.log('%c Fichiers du site → https://github.com/Jeyffrey/Portfolio ', 'background: #515ee1; color: #bada55; padding: 5px;');

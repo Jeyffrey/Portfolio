@@ -2,10 +2,7 @@
     <header id="header">
         <div class="header--breadcrumbs">
             <div class="header--titre-site">
-                <h1>
-                    <router-link v-if="breadcrumbs" :to="{ name: 'projets' }">Jeyffrey</router-link>
-                    <span v-else>Jeyffrey</span>
-                </h1>
+                <router-link :to="{ name: 'projets' }">Jeyffrey</router-link>
             </div>
 
             <transition name="breadcrumbs" mode="out-in" appear>
