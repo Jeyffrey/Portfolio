@@ -26,8 +26,5 @@ export default new VueRouter({
             name: 'projets',
             component: require('../components/pages/Projets-Category.vue')
         }
-    ],
-    // scrollBehavior (to, from, savedPosition) {
-    //     return { x: 0, y: 0 }
-    // }
+    ]
 })

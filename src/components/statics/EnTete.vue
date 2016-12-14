@@ -50,7 +50,7 @@
         computed: {
             breadcrumbs () {
                 return this.state.breadcrumbs
-            },
+            }
         }
     }
 </script>
