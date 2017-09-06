@@ -10,9 +10,7 @@
 }
 
 
-.contenu, .lien-retour {
-    margin: 50px 0 0;
-
+.contenu {
     h2 {
         font-size: 2em;
         font-weight: 400;
@@ -30,15 +28,6 @@
         margin: 20px 0;
     }
 
-    a:not(.bouton) {
-        color: $c-main-d;
-        text-decoration: none;
-
-        &:hover, &:focus {
-            text-decoration: underline;
-        }
-    }
-
     blockquote {
         font-style: italic;
         color: #777;
@@ -48,8 +37,23 @@
     }
 }
 
+
 .lien-retour {
     text-align: center;
+}
+
+
+.contenu, .lien-retour {
+    margin: 50px 0 0;
+
+    a:not(.bouton) {
+        color: $c-main-d;
+        text-decoration: none;
+
+        &:hover, &:focus {
+            text-decoration: underline;
+        }
+    }
 }
 
 

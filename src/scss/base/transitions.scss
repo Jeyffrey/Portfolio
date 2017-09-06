@@ -1,10 +1,14 @@
 /* Apparition des blocs */
 .fx .contenu,
 .fx .table {
-    animation: fadeIn .4s .4s both ease;
+    opacity: 0;
+    transform: translateY(50px);
+    animation: fadeIn .4s .4s forwards ease;
 }
 .fx .projet-galerie {
-    animation: fadeIn .4s .6s both ease;
+    opacity: 0;
+    transform: translateY(50px);
+    animation: fadeIn .4s .6s forwards ease;
 }
 
 @keyframes fadeIn {
