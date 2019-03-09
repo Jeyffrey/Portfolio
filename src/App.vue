@@ -21,7 +21,7 @@
                 <a href="https://vuejs.org/" target="_blank">Vue JS</a> <small>(Javascript Framework)</small>
             </p>
             <p>Voir le code source de mon portfolio <a href="https://github.com/Jeyffrey/Portfolio" target="_blank">sur Github</a></p>
-            <p>&copy;&nbsp;2016 - Geoffroy Begouaussel - <a href="mailto:jeyffrey@gmail.com">jeyffrey@gmail.com</a></p>
+            <p>&copy;&nbsp;2019 - Geoffroy Begouaussel - <a href="mailto:jeyffrey@gmail.com">jeyffrey@gmail.com</a></p>
         </footer>
     </div>
 </template>

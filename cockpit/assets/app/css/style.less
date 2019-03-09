@@ -3,9 +3,7 @@
  */
 
 @import (less) "../../lib/codemirror/lib/codemirror.css";
-@import (less) "../../lib/codemirror/lib/show-hint.css";
-@import (less) "../../lib/codemirror/theme/dark.css";
-@import (less) "../../lib/codemirror/theme/light.css";
+@import (less) "../../lib/codemirror/addon/hint/show-hint.css";
 @import "less/uikit/uikit.less";
 
 @global-primary-background: #4FC1E9;
@@ -18,8 +16,23 @@
     font-weight: bolder;
 }
 
+.uk-noselect {
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+.uk-disabled {
+    pointer-events: none;
+}
+
 .uk-selected, tr.uk-selected > td {
     background: @global-selected-background;
+}
+
+[data-uk-svg] {
+    opacity: .2;
 }
 
 .uk-animation-fast {
@@ -27,10 +40,32 @@
     animation-duration: .35s;
 }
 
+.uk-container-breakout {
+    position: relative;
+    width: 100vw;
+    left: ~"calc(-1 * (100vw - 100%) / 2)";
+}
+
+.uk-svg-adjust path,
+.uk-svg-adjust rect,
+.uk-svg-adjust circle:not([fill="none"]),
+.uk-svg-adjust polygon,
+.uk-svg-adjust line {
+    fill: currentColor;
+}
+
+.uk-svg-adjust path[stroke],
+.uk-svg-adjust rect[stroke],
+.uk-svg-adjust circle[stroke],
+.uk-svg-adjust polygon[stroke],
+.uk-svg-adjust line[stroke] {
+    stroke: currentColor;
+}
+
 .app-header {
     position: relative;
     background-color: @global-background;
-    box-shadow: 0 0 20px rgba(0,0,0,0.07);
+    box-shadow: 0 0 20px rgba(0,0,0,0.1);
     margin-bottom: 2.5rem;
     z-index: 10;
 }
@@ -38,7 +73,6 @@
 .app-header-topbar {
 
     //background-color: @global-primary-background;
-    border-bottom: 1px #eee solid;
     padding: 15px 0;
     box-sizing: border-box;
     min-height: 60px;
@@ -50,12 +84,14 @@
     }
 }
 
-.uk-svg-adjust path,
-.uk-svg-adjust rect,
-.uk-svg-adjust circle,
-.uk-svg-adjust polygon,
-.uk-svg-adjust line {
-    fill: currentColor;
+.app-logo {
+    display: inline-block;
+    width: 30px;
+    height: 30px;
+    background-image: url(../media/logo.svg);
+    background-repeat: no-repeat;
+    background-size: contain;
+    margin-right: 10px;
 }
 
 .app-panel-dropdown {
@@ -64,12 +100,33 @@
     max-width: 85vw;
 }
 
+.app-header-topbar a {
+    transition: color 200ms;
+}
+
+.app-panel-dropdown .uk-nav-side a:hover,
+.app-panel-dropdown .uk-nav-side .uk-active a {
+    background: none;
+    color: @global-primary-background;
+}
+
 .app-modulesbar > li > a {
     padding: 0 4px;
+    color: rgba(0,0,0,.3);
 }
 
 .app-modulesbar a.uk-active {
     color: @global-primary-background;
+    position: relative;
+}
+
+.app-modulesbar > li > .uk-active:after {
+    content: "";
+    position: absolute;
+    width: 100%;
+    border-bottom: 3px @global-primary-background solid;
+    bottom: -20px;
+    left: 0;
 }
 
 .app-main {
@@ -80,8 +137,37 @@
     margin: (2 * @global-margin-large) 0;
 }
 
+cp-actionbar {
+    position:fixed;
+    display:block;
+    left:0;
+    right:0;
+    bottom:0;
+    padding: 15px 0;
+    background:@global-background;
+    z-index: 4;
+}
+
+cp-fieldcontainer {
+    display: block;
+}
+
+@media (min-width:1220px) {
+
+    cp-fieldcontainer {
+        padding-left: 15px;
+        border-left: 2px rgba(0,0,0,.1) solid;
+        transition: border-color 200ms;
+    }
+
+    cp-fieldcontainer[active="true"] {
+        border-color: @global-primary-background;
+    }
+}
+
 .material-ripple {
     position: absolute;
+    pointer-events: none;
     z-index: 100000;
 }
 .material-ink {
@@ -90,7 +176,7 @@
     border-radius: 50%;
     transform: scale(0);
 }
-.material-ink.animate {
+.material-ink.animate-ink {
     animation: matrial-ripple .6s linear
 }
 @keyframes matrial-ripple {
@@ -100,20 +186,38 @@
     }
 }
 
+.dashboard-header-panel {
+    background: @global-contrast-color;
+    margin-top: -35px;
+    margin-bottom: -80px;
+    padding-top: 20px;
+    padding-bottom: 120px;
+    z-index: 0;
+}
+
 
 // vendor styles
 
-.mce-container, .mce-toolbar .mce-btn {
-    background: @global-contrast-color !important;
+.mce-tinymce {
+    box-shadow: none !important;
 }
 
-.uk-panel-box.uk-panel-card .mce-panel {
+.mce-panel {
+    border: none !important;
+}
+
+.uk-htmleditor-content,
+.uk-htmleditor-navbar {
     border: none;
+}
+.uk-htmleditor-navbar {
+    position: relative;
+    box-shadow:0 1px 2px rgba(0, 0, 0, 0.2);
+    z-index: 1;
 }
 
 .jsoneditor {
-    border-color: #ccc !important;
-    border-color: #ccc !important;
+    border: none !important;
 }
 
 div.jsoneditor-tree {
@@ -122,7 +226,8 @@ div.jsoneditor-tree {
 
 .jsoneditor-menu {
     background-color: @global-contrast-color !important;
-    border-color: #ccc !important;
+    border: none !important;
+    box-shadow:0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .jsoneditor-menu input {
@@ -148,6 +253,40 @@ div.jsoneditor-menu>div.jsoneditor-modes>button {
 
 .CodeMirror .CodeMirror-activeline-background { background: #e8f2ff; }
 .CodeMirror .CodeMirror-matchingbracket { outline:1px solid grey; color:black !important; }
+
+.CodeMirror .CodeMirror-gutters {
+    border: none;
+    background-color: @global-contrast-color;
+}
+
+.CodeMirror-hints {
+  z-index: 1010;
+  margin: 0;
+
+  box-shadow: 2px 3px 5px rgba(0,0,0,.2);
+  border-radius: 3px;
+  border: 1px solid silver;
+
+  background: white;
+  font-size: 90%;
+  font-family: monospace;
+  max-height: 20em;
+  overflow-y: auto;
+}
+
+.CodeMirror-hint {
+  margin: 0;
+  padding: 0 4px;
+  border-radius: 2px;
+  white-space: pre;
+  color: black;
+  cursor: pointer;
+}
+
+li.CodeMirror-hint-active {
+  background: #08f;
+  color: white;
+}
 
 // spectrum color picker
 .sp-container, .sp-replacer  {

@@ -9,7 +9,7 @@
 
     </style>
 
-    <div class="picoedit">
+    <div class="picoedit" show="{isReady}">
 
         <div class="picoedit-toolbar uk-flex" if="{path}">
             <div class="uk-flex-item-1 uk-text-truncate">
@@ -20,7 +20,7 @@
             </div>
         </div>
 
-        <codemirror name="codemirror"></codemirror>
+        <codemirror ref="codemirror" height="{opts.height || 400}" readonly="{opts.readonly || false}"></codemirror>
     </div>
 
     <script>
@@ -30,31 +30,28 @@
             editor;
 
         this.isReady = false;
-
-        this.ready = new Promise(function(resolve){
-
-            $this.tags.codemirror.on('ready', function(){
-                editor = $this.codemirror.editor;
-
-                editor.addKeyMap({
-                    'Ctrl-S': function(){ $this.save(); },
-                    'Cmd-S': function(){ $this.save(); }
-                });
-
-                $this.isReady = true;
-
-                resolve();
-            });
-        });
-
         root.picoedit = this;
 
         this.path = null;
 
         this.on('mount', function() {
 
-            if (opts.path) {
+            this.ready = new Promise(function(resolve){
 
+                $this.tags.codemirror.on('ready', function(){
+
+                    editor = $this.refs.codemirror.editor;
+
+                    editor.addKeyMap({
+                        'Ctrl-S': function(){ $this.save(); },
+                        'Cmd-S': function(){ $this.save(); }
+                    });
+
+                    resolve();
+                });
+            });
+
+            if (opts.path) {
                 this.open(opts.path);
             }
         });
@@ -69,13 +66,14 @@
                 editor.clearHistory();
 
                 requestapi({"cmd":"readfile", "path":path}, function(content){
-
                     editor.setOption("mode", getMode(path));
-                    editor.setValue(content);
                     editor.focus();
-                    editor.refresh();
+                    $this.isReady = true;
 
                     this.update();
+
+                    editor.setValue(content);
+                    editor.refresh();
 
                 }.bind(this), "text");
 
@@ -101,7 +99,9 @@
         }
 
         function getMode(path) {
-            var mode = CodeMirror.findModeByFileName(path).mode || 'text';
+
+            var def = CodeMirror.findModeByFileName(path) || {},
+                mode = def.mode || 'text';
 
             if (mode == 'php') {
                 mode = 'application/x-httpd-php';

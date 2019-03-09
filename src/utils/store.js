@@ -8,9 +8,7 @@ class Store {
             projets: {
                 projets: []
             },
-            apropos: {
-                articles: []
-            }
+            aboutpage: null
         }
     }
 
@@ -47,15 +45,19 @@ class Store {
 
     /* PROJETS */
     fetchApropos () {
-        Vue.http.get('/cockpit/api/collections/get/Apropos?token=6a20e85e541cfa4e3b516ea4bfe5af').then((response) => {
-            this.state.etat = true
-            this.state.apropos.articles = response.data.entries
-            this.state.breadcrumbs = {
-                0: {
-                    titre: 'A propos'
-                }
-            }
-        });
+		Vue.http.get('/cockpit/api/singletons/get/About?token=6a20e85e541cfa4e3b516ea4bfe5af')
+			.then((response) => {
+				return response.json();
+			})
+			.then((response) => {
+				this.state.etat = true
+				this.state.aboutpage = response
+				this.state.breadcrumbs = {
+					0: {
+						titre: 'A propos'
+					}
+				}
+			});
     }
 }
 

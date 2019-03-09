@@ -37,6 +37,8 @@
 
             select: function(callback, options) {
 
+                if (!App.$data.acl.finder) return;
+
                 callback = callback || function(){};
 
                 options  = App.$.extend({
@@ -50,10 +52,10 @@
                 var selected = [], dialog = UIkit.modal.dialog([
                     '<div>',
                         '<div class="uk-modal-header uk-text-large">Select file</div>',
-                        '<cp-finder path="'+(options.path || '')+'" typefilter="'+(options.typefilter || '')+'"></cp-finder>',
+                        '<cp-finder path="'+(options.path || '')+'" typefilter="'+(options.typefilter || '')+'" modal="true"></cp-finder>',
                         '<div class="uk-modal-footer uk-text-right">',
                             '<button class="uk-button uk-button-primary uk-margin-right uk-button-large uk-hidden js-select-button">Select: <span></span> item(s)</button>',
-                            '<button class="uk-button uk-button-large uk-modal-close">Close</button>',
+                            '<a class="uk-button uk-button-large uk-button-link uk-modal-close">Close</a>',
                         '</div>',
                     '</div>'
                 ].join(''), {modal:false});
@@ -104,10 +106,10 @@
                 var selected = [], dialog = UIkit.modal.dialog([
                     '<div>',
                         '<div class="uk-modal-header uk-text-large">Select asset</div>',
-                        '<cp-assets path="'+(options.path || '')+'" typefilter="'+(options.typefilter || '')+'"></cp-assets>',
+                        '<cp-assets path="'+(options.path || '')+'" typefilter="'+(options.typefilter || '')+'" modal="true"></cp-assets>',
                         '<div class="uk-modal-footer uk-text-right">',
                             '<button class="uk-button uk-button-primary uk-margin-right uk-button-large uk-hidden js-select-button">Select: <span></span> item(s)</button>',
-                            '<button class="uk-button uk-button-large uk-modal-close">Close</button>',
+                            '<a class="uk-button uk-button-large uk-button-link uk-modal-close">Close</a>',
                         '</div>',
                     '</div>'
                 ].join(''), {modal:false});
@@ -146,6 +148,24 @@
             }
         }
     };
+
+
+    var _accounts = {}; // cache
+
+    Cockpit.account = function(id) {
+
+        if (!_accounts[id]) {
+
+            _accounts[id] = new Promise(function(resolve, reject) {
+
+                App.request('/accounts/find', {options: {filter:{_id:id}}}).then(function(response) {
+                    resolve(response && Array.isArray(response.accounts) && response.accounts[0] ? response.accounts[0] : null);
+                });
+            });
+        }
+
+        return _accounts[id];
+    }
 
     App.$.extend(true, App, Cockpit);
 

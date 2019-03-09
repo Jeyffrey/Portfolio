@@ -6,7 +6,7 @@
         <li><a href="@route('/collections')">@lang('Collections')</a></li>
         <li data-uk-dropdown="mode:'hover, delay:300'">
 
-            <a href="@route('/collections/entries/'.$collection['name'])"><i class="uk-icon-bars"></i> {{ @$collection['label'] ? $collection['label']:$collection['name'] }}</a>
+            <a href="@route('/collections/entries/'.$collection['name'])"><i class="uk-icon-bars"></i> {{ htmlspecialchars(@$collection['label'] ? $collection['label']:$collection['name']) }}</a>
 
             <div class="uk-dropdown">
                 <ul class="uk-nav uk-nav-dropdown">
@@ -26,21 +26,21 @@
 
 <div class="uk-margin-top" riot-view>
 
-    <div class="uk-viewport-height-1-3 uk-flex uk-flex-center uk-flex-middle" name="parse" data-step="parse" show="{step=='parse'}">
+    <div class="uk-viewport-height-1-3 uk-flex uk-flex-center uk-flex-middle" ref="parse" data-step="parse" show="{step=='parse'}">
         <div class="uk-text-center">
             <i class="uk-h1 uk-icon-spinner uk-icon-spin"></i>
             <p class="uk-text-muted uk-text-large">@lang('Parsing file...')</p>
         </div>
     </div>
 
-    <div class="uk-viewport-height-1-3 uk-flex uk-flex-center uk-flex-middle" name="process" data-step="process" show="{step=='process'}">
+    <div class="uk-viewport-height-1-3 uk-flex uk-flex-center uk-flex-middle" ref="process" data-step="process" show="{step=='process'}">
         <div class="uk-text-center">
             <i class="uk-h1 uk-icon-spinner uk-icon-spin"></i>
-            <p class="uk-text-muted uk-text-large"><span name="progress"></span></p>
+            <p class="uk-text-muted uk-text-large"><span ref="progress"></span></p>
         </div>
     </div>
 
-    <div name="step1" class="uk-pabel uk-panel-box uk-panel-card uk-text-center uk-viewport-height-1-3 uk-flex uk-flex-center uk-flex-middle" data-step="1" show="{step==1}">
+    <div ref="step1" class="uk-pabel uk-panel-box uk-panel-card uk-text-center uk-viewport-height-1-3 uk-flex uk-flex-center uk-flex-middle" data-step="1" show="{step==1}">
         <div>
 
             <p>
@@ -53,7 +53,7 @@
         </div>
     </div>
 
-    <div name="step2" data-step="1" show="{step==2}">
+    <div ref="step2" data-step="1" if="{step==2}" show="{step==2}">
 
         <h2>{ file.name }</h2>
         <div class="uk-margin uk-text-muted">{ data.rows.length } @lang('Entries found.')</div>
@@ -76,8 +76,8 @@
                     </td>
                     <td>
                         <div class="uk-form-select">
-                            <a class="{ parent.mapping[field.name] ? 'uk-link-muted':''}"><i class="uk-icon-exchange" show="{parent.mapping[field.name]}"></i> { parent.mapping[field.name] || 'Select...'}</a>
-                            <select class="uk-width-1-1" bind="mapping['{field.name}']">
+                            <a class="{ parent.mapping[field.name] ? 'uk-link-muted':''}"><i class="uk-icon-exchange" show="{mapping[field.name]}"></i> { parent.mapping[field.name] || 'Select...'}</a>
+                            <select class="uk-width-1-1" onchange="{ setMapping(field.name) }">
                                 <option></option>
                                 <option each="{h,hidx in data.headers}" value="{h}">{h}</option>
                             </select>
@@ -87,7 +87,7 @@
                             @lang('Match against:')
                             <div class="uk-form-select">
                                 {field.options.link}.<a>{parent.filterData[field.name] || '(Select field...)'}</a>
-                                <select bind="filterData['{field.name}']">
+                                <select onchange="{ setFilterData(field.name) }">
                                     <option value=""></option>
                                     <option value="{f.name}" each="{f in _COL_[field.options.link].fields}">{f.name}</option>
                                 </select>
@@ -96,16 +96,16 @@
                     </td>
                     <td>
                         <div class="uk-text-center">
-                            <input type="checkbox" bind="filter['{field.name}']" />
+                            <input class="uk-checkbox" type="checkbox" onchange="{ setFilter(field.name) }" />
                         </div>
                     </td>
                 </tr>
             </tbody>
         </table>
 
-        <div class="uk-margin">
+        <div class="uk-margin-large-top">
             <button class="uk-button uk-button-large uk-button-primary" onclick="{ doImport }">@lang('Import')</button>
-            <a class="uk-margin-left" onclick="{restart}">@lang('Cancel')</a>
+            <a class="uk-button uk-button-large uk-button-link" onclick="{restart}">@lang('Cancel')</a>
         </div>
 
     </div>
@@ -132,6 +132,45 @@
                 window._COL_ = collections;
             });
 
+            this.refs.step1.addEventListener('dragenter', function(e) {
+                e.stopPropagation();
+                e.preventDefault();
+                this.classList.add('uk-dragover');
+            }, false);
+
+            this.refs.step1.addEventListener('dragleave', function(e) {
+                e.stopPropagation();
+                e.preventDefault();
+                this.classList.remove('uk-dragover');
+            }, false);
+
+            this.refs.step1.addEventListener('dragover', function(e) {
+                e.stopPropagation();
+                e.preventDefault();
+            }, false);
+
+            this.refs.step1.addEventListener('drop', function(e){
+
+                e.stopPropagation();
+                e.preventDefault();
+
+                $this.selectFile(e.dataTransfer.files[0]);
+
+            }, false);
+
+            this.refs.step1.addEventListener('change', function(e){
+                e.stopPropagation();
+                e.preventDefault();
+
+                $this.selectFile(e.target.files[0]);
+
+                // loosy hack
+                setTimeout(function() {
+                    App.$(e.target).replaceWith(e.target.outerHTML);
+                }, 100);
+
+            }, false);
+
         });
 
         this.collection.fields.forEach(function(field) {
@@ -154,6 +193,24 @@
             }
         });
 
+        setFilter(fieldName) {
+            return function(evt) {
+                this.filter[fieldName] = evt.currentTarget.checked;
+            }
+        }
+
+        setMapping(fieldName) {
+            return function(evt) {
+                this.mapping[fieldName] = evt.currentTarget.value;
+            }
+        }
+
+        setFilterData(fieldName) {
+            return function(evt){
+                this.filterData[fieldName] = evt.currentTarget.value;
+            }
+        }
+
         restart() {
 
             this.data = null;
@@ -162,14 +219,23 @@
             this.filterData = {};
 
             this.step = 1;
-            this.step1.classList.remove('uk-dragover');
+            this.refs.step1.classList.remove('uk-dragover');
         }
 
         // STEP 1
 
         selectFile(file) {
 
-            if (!file || ['application/json', 'text/csv'].indexOf(file.type) == -1) {
+            if (file) {
+                file._type = file.type;
+            }
+
+
+            if (file && !file.type && file.name.match(/\.(csv|json)$/i)) {
+                file._type = file.name.match(/\.csv$/i) ? 'text/csv':'application/json';
+            }
+
+            if (!file || ['application/json', 'text/csv'].indexOf(file._type) == -1) {
                 return App.ui.notify("Only JSON and CSV files are supported.");
             }
 
@@ -179,6 +245,10 @@
             ImportParser.parse(file).then(function(data) {
 
                 $this.data = data;
+
+                if (data.headers.indexOf('_id') != -1) {
+                    $this.fields.unshift({name:'_id', options:{}});
+                }
 
                 // auto-map fields
                 $this.fields.forEach(function(f){
@@ -197,46 +267,6 @@
             });
         }
 
-        this.step1.addEventListener('dragenter', function(e) {
-            e.stopPropagation();
-            e.preventDefault();
-            this.classList.add('uk-dragover');
-        }, false);
-
-        this.step1.addEventListener('dragleave', function(e) {
-            e.stopPropagation();
-            e.preventDefault();
-            this.classList.remove('uk-dragover');
-        }, false);
-
-        this.step1.addEventListener('dragover', function(e) {
-            e.stopPropagation();
-            e.preventDefault();
-        }, false);
-
-        this.step1.addEventListener('drop', function(e){
-
-            e.stopPropagation();
-            e.preventDefault();
-
-            $this.selectFile(e.dataTransfer.files[0]);
-
-        }, false);
-
-        this.step1.addEventListener('change', function(e){
-            e.stopPropagation();
-            e.preventDefault();
-
-            $this.selectFile(e.target.files[0]);
-
-            // loosy hack
-            setTimeout(function() {
-                App.$(e.target).replaceWith(e.target.outerHTML);
-            }, 100);
-
-        }, false);
-
-        // STEP 2
 
 
         // HELPER
@@ -256,7 +286,11 @@
             });
 
             if (required.length) {
-                return App.ui.notify("Required fields are not mapped:<div class='uk-margin-small-top'>"+required+"</div>");
+
+                return App.ui.notify([
+                    App.i18n.get('Required fields are not mapped:'),
+                    '<div class="uk-margin-small-top">'+required+'</div>'
+                ].join(''));
             }
 
             var cnt    = 20,
@@ -265,7 +299,7 @@
                 chain  = Promise.resolve(),
                 progress = 0;
 
-            this.progress.innerHTML  = '0 %';
+            this.refs.progress.innerHTML  = '0 %';
             this.step = 'process';
 
             chunks.forEach(function(chunk){
@@ -281,15 +315,15 @@
                             entry = {};
 
                             Object.keys($this.mapping).forEach(function(k, val, d){
-                                val = c[$this.mapping[k]];
 
+                                val = c[$this.mapping[k]];
                                 d   = $this.filterData[k];
 
                                 if ($this.filter[k]) {
                                     promises.push(ImportFilter.filter(fields[k], val, d).then(function(val){
                                         entry[k] = val;
                                     }));
-                                } else if (_.isObject(val)) {
+                                } else if (_.isObject(val) && !Array.isArray(val)) {
                                     entry[k] = val.type == fields[k].type ? val : null;
                                 } else {
                                     entry[k] = val;
@@ -305,7 +339,7 @@
 
                         Promise.all(promises).then(function(){
 
-                            App.callmodule('collections:save',[$this.collection.name, entries]).then(function(data) {
+                            App.request('/collections/import/execute',{collection: $this.collection.name, entries: entries}).then(function(data) {
 
                                 progress += cnt;
 
@@ -313,7 +347,7 @@
                                     progress = $this.data.rows.length;
                                 }
 
-                                $this.progress.innerHTML = Math.ceil((progress/$this.data.rows.length)*100)+' %';
+                                $this.refs.progress.innerHTML = Math.ceil((progress/$this.data.rows.length)*100)+' %';
 
                                 if (progress == $this.data.rows.length) {
                                     App.ui.notify("Import completed.", "success");
@@ -321,11 +355,17 @@
                                     $this.update();
                                 }
 
-                                resolve(data && data.result);
+                                resolve(data);
+
+                            }, function() {
+                                App.ui.notify('Import failed.', 'danger');
+                                $this.restart();
+                                $this.update();
                             });
+
                         }, function(msg) {
 
-                            App.ui.notify(msg, "danger");
+                            App.ui.notify(msg, 'danger');
 
                             progress += cnt;
 
@@ -333,7 +373,7 @@
                                 progress = $this.data.rows.length;
                             }
 
-                            $this.progress.innerHTML = Math.ceil((progress/$this.data.rows.length)*100)+' %';
+                            $this.refs.progress.innerHTML = Math.ceil((progress/$this.data.rows.length)*100)+' %';
 
                             if (progress == $this.data.rows.length) {
                                 App.ui.notify("Import completed.", "success");

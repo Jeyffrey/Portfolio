@@ -28,7 +28,7 @@
 @panel-divider-gutter-large:                    @global-grid-gutter-large;
 @panel-divider-border:                          @global-border;
 
-
+@panel-box-secondary-background:                #f9f9f9;
 
 // Sub-object: `uk-panel-title`
 // ========================================================================
@@ -93,6 +93,14 @@
 
     .uk-panel-card {
         box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.22);
+    }
+
+    .uk-panel-card-hover {
+        transition: box-shadow 200ms;
+    }
+
+    .uk-panel-card-hover:hover {
+        box-shadow: 0 25px 80px rgba(0,0,0,0.12), 0 3px 12px rgba(0,0,0,0.05);
     }
 
     .uk-panel-framed {

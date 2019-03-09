@@ -1,6 +1,6 @@
 <field-wysiwyg>
 
-    <textarea name="input" class="uk-width-1-1" rows="5" style="height:350px;visibility:hidden;"></textarea>
+    <textarea ref="input" class="uk-width-1-1" rows="5" style="height:350px;visibility:hidden;"></textarea>
 
     <script>
 
@@ -9,37 +9,34 @@
             languages = ['ar','az','ba','bg','by','ca','cs','da','de','el','eo','es_ar','es','fa','fi','fr','ge','he','hr','hu','id','it','ja','ko','lt','lv','mk','nl','no_NB','pl','pt_br','pt_pt','ro','ru','sl','sq','sr-cir','sr-lat','sv','th','tr','ua','vi','zh_cn','zh_tw'],
             editor;
 
-        if (opts.cls) {
-            App.$(this.input).addClass(opts.cls);
-        }
-
-        if (opts.rows) {
-            this.input.setAttribute('rows', opts.rows);
-        }
-
         this.value = null;
-        this._field = null;
 
-        this.$updateValue = function(value, field) {
+        this.$updateValue = function(value, field, force) {
 
             if (this.value != value) {
 
                 this.value = value;
 
-                if (editor && this._field != field) {
+                if (editor && force) {
                     editor.setContent(this.value || '');
                 }
             }
-
-            this._field = field;
 
         }.bind(this);
 
 
         this.on('mount', function(){
 
-            if (!this.input.id) {
-                this.input.id = 'wysiwyg-'+parseInt(Math.random()*10000000, 10);
+            if (opts.cls) {
+                App.$(this.refs.input).addClass(opts.cls);
+            }
+
+            if (opts.rows) {
+                this.refs.input.setAttribute('rows', opts.rows);
+            }
+
+            if (!this.refs.input.id) {
+                this.refs.input.id = 'wysiwyg-'+parseInt(Math.random()*10000000, 10);
             }
 
             var assets = [
@@ -56,9 +53,10 @@
 
                     setTimeout(function(){
 
-                        if (!App.$('#'+this.input.id).length) return;
+                        if (!App.$('#'+this.refs.input.id).length) return;
 
                         tinymce.init(App.$.extend(true, {
+                            branding: false,
                             resize: true,
                             height: 350,
                             menubar: 'edit insert view format table tools',
@@ -70,25 +68,28 @@
                             relative_urls: false
                         }, opts.editor || {}, {
 
-                          selector: '#'+this.input.id,
+                          selector: '#'+this.refs.input.id,
                           setup: function (ed) {
 
-                              $this.input.value = $this.value;
+                              $this.refs.input.value = $this.value;
 
                               var clbChange = function(e){
                                 ed.save();
-                                $this.$setValue($this.input.value, true);
+                                $this.$setValue($this.refs.input.value, true);
                               };
 
                               ed.on('ExecCommand', clbChange);
                               ed.on('KeyUp', clbChange);
                               ed.on('Change', clbChange);
+                              ed.on('focus', function() {
+                                $this.root.dispatchEvent(new Event('focusin', { bubbles: true, cancelable: true }));      
+                              });
 
                               var clbSave = function(){
                                 var form = App.$($this.root).closest('form');
 
                                 if (form.length) {
-                                    form.trigger('submit');
+                                    form.trigger('submit', [ed]);
                                 }
                               };
 
@@ -109,9 +110,9 @@
 
             }.bind(this)).catch(function(){
 
-                this.input.value = this.value;
+                this.refs.input.value = this.value;
 
-                App.$(this.input).css('visibility','').on('change', function() {
+                App.$(this.refs.input).css('visibility','').on('change', function() {
                     $this.$setValue(this.value);
                 });
 
@@ -125,18 +126,21 @@
 
             tinymce.PluginManager.add('mediapath', function(editor) {
 
-                editor.addMenuItem('mediapath', {
-                    icon: 'image',
-                    text: 'Insert image (Finder)',
-                    onclick: function(){
+                if (App.$data.acl.finder) {
+                    
+                    editor.addMenuItem('mediapath', {
+                        icon: 'image',
+                        text: 'Insert image (Finder)',
+                        onclick: function(){
 
-                        App.media.select(function(selected) {
-                            editor.insertContent('<img src="' + SITE_URL+'/'+selected + '" alt="">');
-                        }, { typefilter:'image', pattern: '*.jpg|*.png|*.gif|*.svg' });
-                    },
-                    context: 'insert',
-                    prependToContext: true
-                });
+                            App.media.select(function(selected) {
+                                editor.insertContent('<img src="' + SITE_URL+'/'+selected + '" alt="">');
+                            }, { typefilter:'image', pattern: '*.jpg|*.jpeg|*.png|*.gif|*.svg' });
+                        },
+                        context: 'insert',
+                        prependToContext: true
+                    });
+                }
 
                 editor.addMenuItem('assetpath', {
                     icon: 'image',

@@ -18,32 +18,53 @@
 
                     <p><strong><span class="uk-badge app-badge">System</span></strong></p>
 
-                    <strong>General</strong>
+                    <h4 class="uk-text-bold">@lang('General')</h4>
+                    <hr>
+
                     <table class="uk-table uk-table-striped">
                         <tbody>
                             <tr>
-                                <td width="30%">Version</td>
+                                <td width="30%">@lang('Version')</td>
                                 <td>{{ $info['app']['version'] }}</td>
                             </tr>
                         </tbody>
                     </table>
 
-                    <strong>Cache</strong>
+                    <h4 class="uk-text-bold">@lang('Cache')</h4>
+                    <hr>
 
                     <div class="uk-margin">
 
-                        <div if="{ cacheSize }">
-                            { cacheSize } <a title="@lang('Clean up')" data-uk-tooltip="pos:'right'" onclick="{cleanUpCache}"><i class="uk-icon-trash-o"></i></a>
+                        <div class="uk-panel uk-panel-box" if="{ !cleaning && cacheSize }">
+                            { cacheSize } <a title="@lang('Clear cache')" data-uk-tooltip="pos:'right'" onclick="{cleanUpCache}"><i class="uk-icon-trash-o"></i></a>
                         </div>
 
                         <div class="uk-alert" if="{ cleaning }">
-                            <i class="uk-icon-spinner uk-icon-spin"></i> @lang('Cleaning up...')
+                            <i class="uk-icon-spinner uk-icon-spin"></i> @lang('Clearing cache...')
                         </div>
 
                         <div class="uk-alert uk-alert-success" if="{ !cacheSize }">
                             @lang('Cache is clean')
                         </div>
                     </div>
+
+                    @if($app->module('cockpit')->isSuperAdmin() && count(getenv()))
+
+                    <h4 class="uk-text-bold">@lang('Environment Variables')</h4>
+                    <hr>
+
+                    <table class="uk-table uk-table-striped">
+                        <tbody>
+                            @foreach(getenv() as $key => $value)
+                            <tr>
+                                <td width="30%" class="uk-text-small uk-text-bold">{{ $key }}</td>
+                                <td class="uk-text-small">{{ $value }}</td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+
+                    @endif
 
                 </div>
 
@@ -70,6 +91,14 @@
                                 <td>{{ implode(", ", $info['extensions']) }}</td>
                             </tr>
                             <tr>
+                                <td width="30%">Max. execution time</td>
+                                <td>{{ ini_get("max_execution_time") }} sec.</td>
+                            </tr>
+                            <tr>
+                                <td width="30%">OPCache enabled</td>
+                                <td><span class="uk-badge uk-badge-outline uk-text-{{ ini_get("opcache.enable") ? 'success':'danger' }}">{{ ini_get("opcache.enable") ? 'Yes':'No' }}</span></td>
+                            </tr>
+                            <tr>
                                 <td width="30%">Memory limit</td>
                                 <td>{{ ini_get("memory_limit") }}</td>
                             </tr>
@@ -77,20 +106,28 @@
                                 <td width="30%">Upload file size limit</td>
                                 <td>{{ ini_get("upload_max_filesize") }}</td>
                             </tr>
+                            <tr>
+                                <td width="30%">Realpath Cache</td>
+                                <td>{{ ini_get("realpath_cache_size") }} / {{ ini_get("realpath_cache_ttl") }} (ttl)</td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
 
+            @trigger("cockpit.settings.infopage.main.menu")
             </div>
+
 
             @trigger("cockpit.settings.infopage.main")
 
         </div>
 
         <div class="uk-width-medium-1-4">
+
             <ul class="uk-nav uk-nav-side" data-uk-switcher="connect:'#settings-info'">
                 <li><a href="#SYSTEM">System</a></li>
                 <li><a href="#PHP">PHP</a></li>
+                @trigger("cockpit.settings.infopage.aside.menu")
             </ul>
 
             @trigger("cockpit.settings.infopage.aside")
@@ -100,9 +137,13 @@
 
             var $this = this;
 
+            this._system = {};
+            this.system  = {{ json_encode($info['app']) }};
             this.cacheSize = {{ $info['cacheSize'] ? '"'.$info['cacheSize'].'"':0 }};
+            this.loading = false;
 
             this.on('mount', function() {
+
 
             });
 
@@ -117,6 +158,79 @@
                         $this.update();
                     }, 1000);
                 });
+            }
+
+            version_compare(v1, v2, operator) {
+
+              var i, x, compare = 0, vm = {
+                'dev': -6,
+                'alpha': -5,
+                'a': -5,
+                'beta': -4,
+                'b': -4,
+                'RC': -3,
+                'rc': -3,
+                '#': -2,
+                'p': 1,
+                'pl': 1
+              }
+
+              var _prepVersion = function (v) {
+                v = ('' + v).replace(/[_\-+]/g, '.')
+                v = v.replace(/([^.\d]+)/g, '.$1.').replace(/\.{2,}/g, '.')
+                return (!v.length ? [-8] : v.split('.'))
+              }
+
+              var _numVersion = function (v) {
+                return !v ? 0 : (isNaN(v) ? vm[v] || -7 : parseInt(v, 10))
+              }
+
+              v1 = _prepVersion(v1)
+              v2 = _prepVersion(v2)
+              x = Math.max(v1.length, v2.length)
+              for (i = 0; i < x; i++) {
+                if (v1[i] === v2[i]) {
+                  continue
+                }
+                v1[i] = _numVersion(v1[i])
+                v2[i] = _numVersion(v2[i])
+                if (v1[i] < v2[i]) {
+                  compare = -1
+                  break
+                } else if (v1[i] > v2[i]) {
+                  compare = 1
+                  break
+                }
+              }
+              if (!operator) {
+                return compare
+              }
+
+              switch (operator) {
+                case '>':
+                case 'gt':
+                  return (compare > 0)
+                case '>=':
+                case 'ge':
+                  return (compare >= 0)
+                case '<=':
+                case 'le':
+                  return (compare <= 0)
+                case '===':
+                case '=':
+                case 'eq':
+                  return (compare === 0)
+                case '<>':
+                case '!==':
+                case 'ne':
+                  return (compare !== 0)
+                case '':
+                case '<':
+                case 'lt':
+                  return (compare < 0)
+                default:
+                  return null
+              }
             }
 
         </script>

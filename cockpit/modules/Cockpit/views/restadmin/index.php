@@ -6,29 +6,86 @@
 </div>
 
 
-<div class="uk-margin-large-top uk-form" riot-view>
-
-    <h3>@lang('Full access API-key') <span class="uk-badge">@lang('Share with caution')</span></h3>
+<div class="uk-margin-top uk-form" riot-view>
 
     <div class="uk-grid">
-        <div class="uk-width-1-2">
+        <div class="uk-width-2-3">
 
-            <div class="uk-grid">
+            <div class="uk-text-large uk-text-bold">
+                <span class="uk-text-uppercase">@lang('Master API-Key')</span>
+                <span class="uk-badge uk-badge-danger" show="{ keys.master }">@lang('Share with caution')</span>
+            </div>
+
+            <div class="uk-grid uk-grid-small uk-flex-middle uk-margin-top">
                 <div class="uk-flex-item-1">
                     <input class="uk-width-1-1 uk-form-large uk-text-primary" type="text" placeholder="@lang('No key generated')" bind="keys.master" name="fullaccesskey" readonly>
                 </div>
+                <div if="{keys.master}">
+                    <a class="uk-margin-right" onclick="{ copyApiKey }" title="@lang('Copy Token')" data-uk-tooltip="pos:'top'"><i class="uk-icon-copy"></i></a>
+                    <a onclick="{ removeMasterKey }" title="@lang('Delete')" data-uk-tooltip="pos:'top'"><i class="uk-icon-trash-o uk-text-danger"></i></a>
+                </div>
                 <div>
-                    <button class="uk-button uk-button-large" type="button" onclick="{ generate }">@lang('Generate')</button>
+                    <button class="uk-button uk-button-primary uk-button-large" type="button" onclick="{ generate }" title="@lang('Generate Token')" data-uk-tooltip="pos:'top'"><i class="uk-icon-magic"></i></button>
                 </div>
             </div>
 
-            <button class="uk-button uk-button-primary uk-button-large uk-margin-top" type="button" name="button" onclick="{ save }" show="{ keys.master }">@lang('Save')</button>
+            <div class="uk-margin-large-top">
+                <span class="uk-badge uk-badge-outline uk-text-muted">@lang('Custom keys')</span>
+            </div>
+
+            <div class="uk-margin" show="{keys.special.length}">
+
+                <div class="uk-margin uk-flex" each="{setting,idx in keys.special}">
+                    <div class="uk-panel uk-panel-box uk-panel-card uk-flex-item-1 uk-margin-right">
+
+                        <div class="uk-form-row">
+                            <label class="uk-text-small uk-text-uppercase">@lang('API-Key')</label>
+
+                            <div class="uk-flex uk-flex-middle">
+                                <input class="uk-width-1-1 uk-form-large uk-margin-right uk-text-primary" type="text" placeholder="@lang('No key generated')" bind="keys.special[{idx}].token" readonly>
+                                <a class="uk-margin-right" onclick="{ parent.copyApiKey }" title="@lang('Copy Token')" data-uk-tooltip="pos:'top'"><i class="uk-icon-copy"></i></a>
+                                <a onclick="{ parent.generate }" title="@lang('Generate Token')" data-uk-tooltip="pos:'top'"><i class="uk-icon-magic"></i></a>
+                            </div>
+                        </div>
+
+                        <div class="uk-form-row">
+                            <label class="uk-text-small">@lang('Rules')</label>
+                            <field-code bind="keys.special[{idx}].rules"></field-code>
+                        </div>
+
+                        <div class="uk-form-row">
+                            <label class="uk-text-small">@lang('Info')</label>
+                            <input class="uk-width-1-1 uk-form-large uk-text-muted uk-form-blank" type="text" placeholder="..." bind="keys.special[{idx}].info">
+                        </div>
+
+                    </div>
+
+                    <div>
+                        <button class="uk-button uk-button-large uk-button-danger uk-display-block" onclick="{ parent.removeKey }" title="@lang('Remove Key')" data-uk-tooltip="pos:'right'"><i class="uk-icon-trash"></i></button>
+                        <button class="uk-button uk-button-large uk-button-link uk-text-muted uk-display-block uk-margin-small-top" onclick="{ addKey }" title="@lang('Add Key')" data-uk-tooltip="pos:'right'"><i class="uk-icon-plus"></i></button>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="uk-placeholder uk-text-center" show="{!keys.special.length}">
+                <p class="uk-text-large uk-text-muted">@lang('You have no custom keys')</p>
+                <button class="uk-button uk-button-link" onclick="{ addKey }"><i class="uk-icon-plus"></i> @lang('API Key')</button>
+            </div>
+
+            <cp-actionbar>
+                <div class="uk-container uk-container-center">
+                    <button class="uk-button uk-button-primary uk-button-large" type="button" name="button" onclick="{ save }">@lang('Save')</button>
+                    <a class="uk-button uk-button-large uk-button-link" href="@route('/settings')">@lang('Close')</a>
+                </div>
+            </cp-actionbar>
 
         </div>
-        
-        <div class="uk-width-1-2"></div>
-    </div>
 
+        <div class="uk-width-1-3">
+            <!-- TODo: Quick Docs -->
+        </div>
+    </div>
 
 
     <script type="view/script">
@@ -39,8 +96,53 @@
 
         this.keys = {{ json_encode($keys) }};
 
-        generate() {
-            this.keys.master = buildToken(120);
+        this.on('mount', function(){
+
+            // bind clobal command + save
+            Mousetrap.bindGlobal(['command+s', 'ctrl+s'], function(e) {
+                e.preventDefault();
+                $this.save();
+                return false;
+            });
+        });
+
+        addKey(e) {
+
+            this.keys.special.splice(e.item ? e.item.idx+1 : 0, 0, {
+                token: App.Utils.generateToken(120),
+                rules: '*',
+                info: ''
+            });
+        }
+
+        removeKey(e) {
+
+            App.ui.confirm("Are you sure?", function() {
+                $this.keys.special.splice(e.item.idx, 1);
+                $this.update();
+            });
+        }
+
+        removeMasterKey() {
+            this.keys.master = '';
+        }
+
+        generate(e) {
+
+            if (e.item) {
+                e.item.setting.token = App.Utils.generateToken(120);
+            } else {
+                this.keys.master = App.Utils.generateToken(120);
+            }
+        }
+
+        copyApiKey(e) {
+
+            var token = e.item ? e.item.setting.token : this.keys.master;
+
+            App.Utils.copyText(token, function() {
+                App.ui.notify("Copied!", "success");
+            });
         }
 
         save() {
@@ -49,32 +151,6 @@
                 App.ui.notify("Data saved", "success");
             });
         }
-
-        function buildToken(bits, base) {
-            if (!base) base = 16;
-            if (bits === undefined) bits = 128;
-            if (bits <= 0) return '0';
-            var digits = Math.log(Math.pow(2, bits)) / Math.log(base);
-            for (var i = 2; digits === Infinity; i *= 2) {
-                digits = Math.log(Math.pow(2, bits / i)) / Math.log(base) * i;
-            }
-            var rem = digits - Math.floor(digits), res = '';
-            for (var i = 0; i < Math.floor(digits); i++) {
-                var x = Math.floor(Math.random() * base).toString(base);
-                res = x + res;
-            }
-            if (rem) {
-                var b = Math.pow(base, rem);
-                var x = Math.floor(Math.random() * b).toString(base);
-                res = x + res;
-            }
-            var parsed = parseInt(res, base);
-            if (parsed !== Infinity && parsed >= Math.pow(2, bits)) {
-                return hat(bits, base)
-            }
-            else return res;
-        };
-
 
     </script>
 

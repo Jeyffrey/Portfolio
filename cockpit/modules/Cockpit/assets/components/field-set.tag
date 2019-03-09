@@ -2,13 +2,13 @@
 
     <div>
 
-        <div class="uk-alert" if="{!fields.length}">
+        <div class="uk-alert" if="{fields && !fields.length}">
             { App.i18n.get('Fields definition is missing') }
         </div>
 
         <div class="uk-margin" each="{field,idx in fields}">
-            <label><span class="uk-text-small">{ field.label || field.name || ''}</span></label>
-            <cp-field class="uk-width-1-1" field="{field}" bind="value.{field.name}"></cp-field>
+            <label class="uk-display-block uk-text-bold uk-text-small">{ field.label || field.name || ''}</label>
+            <cp-field class="uk-display-block uk-margin-small-top" type="{ field.type || 'text' }" bind="value.{field.name}" opts="{ field.options || {} }"></cp-field>
         </div>
 
     </div>
@@ -18,14 +18,20 @@
         var $this = this;
 
         this._field = null;
+        this.set    = {};
+        this.value  = {};
+        this.fields = [];
 
         riot.util.bind(this);
 
-        this.set    = {};
-        this.fields = opts.fields || [];
-        this.value  = {};
+        this.on('mount', function() {
+            this.fields = opts.fields || [];
+            this.update();
+        });
 
-        this.bind = opts.bind || '';
+        this.on('update', function() {
+            this.fields = opts.fields || [];
+        });
 
         this.$initBind = function() {
             this.root.$value = this.value;

@@ -1,6 +1,6 @@
 <cp-fieldsmanager>
 
-    <div name="fieldscontainer" class="uk-sortable uk-grid uk-grid-small uk-grid-gutter uk-form">
+    <div ref="fieldscontainer" class="uk-sortable uk-grid uk-grid-small uk-grid-gutter uk-form">
 
         <div class="uk-width-{field.width}" data-idx="{idx}" each="{ field,idx in fields }">
 
@@ -9,7 +9,7 @@
                 <div class="uk-grid uk-grid-small">
 
                     <div class="uk-flex-item-1 uk-flex">
-                        <input class="uk-flex-item-1 uk-form-small uk-form-blank" type="text" fields-bind="fields[{idx}].name" placeholder="name" required>
+                        <input class="uk-flex-item-1 uk-form-small uk-form-blank" type="text" bind="fields[{idx}].name" placeholder="name" pattern="[a-zA-Z0-9_]+" required>
                     </div>
 
                     <div class="uk-width-1-4">
@@ -18,7 +18,7 @@
                                 <i class="uk-icon-arrows-h"></i>
                                 <input class="uk-width-1-1 uk-form-small uk-form-blank" value="{ field.width }">
                             </div>
-                            <select fields-bind="fields[{idx}].width">
+                            <select bind="fields[{idx}].width">
                                 <option value="1-1">1-1</option>
                                 <option value="1-2">1-2</option>
                                 <option value="1-3">1-3</option>
@@ -33,14 +33,14 @@
 
                         <ul class="uk-subnav">
 
-                            <li show="{parent.opts.listoption}">
+                            <li if="{parent.opts.listoption}">
                                 <a class="uk-text-{ field.lst ? 'success':'muted'}" onclick="{ parent.togglelist }" title="{ App.i18n.get('Show field on list view') }">
                                     <i class="uk-icon-list"></i>
                                 </a>
                             </li>
 
                             <li>
-                                <a onclick="UIkit.modal('#field-{idx}').show()"><i class="uk-icon-cog uk-text-primary"></i></a>
+                                <a onclick="{ parent.fieldSettings }"><i class="uk-icon-cog uk-text-primary"></i></a>
                             </li>
 
                             <li>
@@ -57,63 +57,76 @@
 
             </div>
 
-            <div class="uk-modal uk-sortable-nodrag" id="field-{idx}">
-                <div class="uk-modal-dialog">
+        </div>
 
-                    <div class="uk-form-row uk-text-bold">
-                        { field.name || 'Field' }
-                    </div>
+    </div>
 
+    <div class="uk-modal uk-sortable-nodrag" ref="modalField">
+        <div class="uk-modal-dialog" if="{field}">
+
+            <div class="uk-form-row uk-text-large uk-text-bold">
+                { field.name || 'Field' }
+            </div>
+
+            <div class="uk-tab uk-flex uk-flex-center uk-margin" data-uk-tab>
+                <li class="uk-active"><a>{ App.i18n.get('General') }</a></li>
+                <li><a>{ App.i18n.get('Access') }</a></li>
+            </div>
+
+            <div class="uk-margin-top ref-tab">
+                <div>
                     <div class="uk-form-row">
 
                         <label class="uk-text-muted uk-text-small">{ App.i18n.get('Field Type') }:</label>
                         <div class="uk-form-select uk-width-1-1 uk-margin-small-top">
                             <a class="uk-text-capitalize">{ field.type }</a>
-                            <select class="uk-width-1-1 uk-text-capitalize" fields-bind="fields[{idx}].type">
-                                <option each="{type,typeidx in parent.fieldtypes}" value="{type.value}">{type.name}</option>
+                            <select class="uk-width-1-1 uk-text-capitalize" bind="field.type">
+                                <option each="{type,typeidx in fieldtypes}" value="{type.value}">{type.name}</option>
                             </select>
                         </div>
                     </div>
 
                     <div class="uk-form-row">
                         <label class="uk-text-muted uk-text-small">{ App.i18n.get('Field Label') }:</label>
-                        <input class="uk-width-1-1 uk-margin-small-top" type="text" fields-bind="fields[{idx}].label" placeholder="{ App.i18n.get('Label') }">
+                        <input class="uk-width-1-1 uk-margin-small-top" type="text" bind="field.label" placeholder="{ App.i18n.get('Label') }">
                     </div>
 
                     <div class="uk-form-row">
                         <label class="uk-text-muted uk-text-small">{ App.i18n.get('Field Info') }:</label>
-                        <input class="uk-width-1-1 uk-margin-small-top" type="text" fields-bind="fields[{idx}].info" placeholder="{ App.i18n.get('Info') }">
+                        <input class="uk-width-1-1 uk-margin-small-top" type="text" bind="field.info" placeholder="{ App.i18n.get('Info') }">
                     </div>
 
                     <div class="uk-form-row">
                         <label class="uk-text-muted uk-text-small">{ App.i18n.get('Field Group') }:</label>
-                        <input class="uk-width-1-1 uk-margin-small-top" type="text" fields-bind="fields[{idx}].group" placeholder="{ App.i18n.get('Group name') }">
+                        <input class="uk-width-1-1 uk-margin-small-top" type="text" bind="field.group" placeholder="{ App.i18n.get('Group name') }">
                     </div>
 
                     <div class="uk-form-row">
                         <label class="uk-text-small uk-text-bold uk-margin-small-bottom">{ App.i18n.get('Options') } <span class="uk-text-muted">JSON</span></label>
-                        <field-object cls="uk-width-1-1" fields-bind="fields[{idx}].options" rows="6" allowtabs="2"></field-object>
+                        <field-object cls="uk-width-1-1" bind="field.options" rows="6" allowtabs="2"></field-object>
                     </div>
 
                     <div class="uk-form-row">
-                        <field-boolean fields-bind="fields[{idx}].required" label="{ App.i18n.get('Required') }"></field-boolean>
+                        <field-boolean bind="field.required" label="{ App.i18n.get('Required') }"></field-boolean>
                     </div>
 
-                    <div class="uk-form-row">
-                        <field-boolean fields-bind="fields[{idx}].localize" label="{ App.i18n.get('Localize') }"></field-boolean>
+                    <div class="uk-form-row" if="{opts.localize !== false}">
+                        <field-boolean bind="field.localize" label="{ App.i18n.get('Localize') }"></field-boolean>
                     </div>
 
-                    <div class="uk-modal-footer uk-text-right"><button class="uk-button uk-button-large uk-button-link uk-modal-close">{ App.i18n.get('Close') }</button></div>
-
+                </div>
+                <div class="uk-hidden">
+                    <field-access-list class="uk-margin-large uk-margin-large-top uk-display-block" bind="field.acl"></field-access-list>
                 </div>
             </div>
 
-        </div>
+            <div class="uk-modal-footer uk-text-right"><button class="uk-button uk-button-large uk-button-link uk-modal-close">{ App.i18n.get('Close') }</button></div>
 
+        </div>
     </div>
 
     <div class="uk-margin-top" show="{fields.length}">
-        <a class="uk-button uk-button-link" onclick="{ addfield }"><i class="uk-icon-plus-circle"></i> { App.i18n.get('Add field') }</a>
+        <a class="uk-button uk-button-outline uk-text-primary" onclick="{ addfield }"><i class="uk-icon-plus-circle"></i> { App.i18n.get('Add field') }</a>
     </div>
 
     <div class="uk-width-medium-1-3 uk-viewport-height-1-3 uk-container-center uk-text-center uk-flex uk-flex-middle" if="{ !fields.length && !reorder }">
@@ -146,11 +159,12 @@
 
     <script>
 
-        riot.util.bind(this, 'fields');
+        riot.util.bind(this);
 
         var $this = this;
 
         this.fields  = [];
+        this.field = null;
         this.reorder = false;
 
         // get all available fields
@@ -159,13 +173,21 @@
 
         for (var tag in riot.tags) {
 
-            if(tag.indexOf('field-')==0) {
+            if (tag.indexOf('field-')==0) {
 
                 f = tag.replace('field-', '');
 
                 this.fieldtypes.push({name:f, value:f});
             }
         }
+
+        // sort by field name
+
+        this.fieldtypes = this.fieldtypes.sort(function(fieldA, fieldB) {
+
+            return fieldA.name.localeCompare(fieldB.name);
+
+        });
         // --
 
         this.$updateValue = function(value, field) {
@@ -195,7 +217,7 @@
 
         this.one('mount', function(){
 
-            UIkit.sortable(this.fieldscontainer, {
+            UIkit.sortable(this.refs.fieldscontainer, {
 
                 dragCustomClass:'uk-form'
 
@@ -214,7 +236,7 @@
                 fields.splice(cidx, 0, fields.splice(oidx, 1)[0]);
 
                 // hack to force complete fields rebuild
-                App.$($this.fieldscontainer).css('height', App.$($this.fieldscontainer).height());
+                App.$($this.refs.fieldscontainer).css('height', App.$($this.refs.fieldscontainer).height());
 
                 $this.fields = [];
                 $this.reorder = true;
@@ -227,12 +249,20 @@
                     $this.$setValue(fields);
 
                     setTimeout(function(){
-                        $this.fieldscontainer.style.height = '';
+                        $this.refs.fieldscontainer.style.height = '';
                     }, 30)
                 }, 0);
 
             });
 
+            App.$(this.root).on('click', '.uk-modal [data-uk-tab] li', function(e) {
+                var item = App.$(this),
+                    idx = item.index();
+
+                item.closest('.uk-tab')
+                    .next('.ref-tab')
+                    .children().addClass('uk-hidden').eq(idx).removeClass('uk-hidden')
+            });
         });
 
         addfield() {
@@ -247,7 +277,8 @@
                 'localize': false,
                 'options' : {},
                 'width'   : '1-1',
-                'lst'     : true
+                'lst'     : true,
+                'acl'     : []
             });
 
             $this.$setValue(this.fields);
@@ -256,6 +287,13 @@
         removefield(e) {
             this.fields.splice(e.item.idx, 1);
             $this.$setValue(this.fields);
+        }
+
+        fieldSettings(e) {
+
+            this.field = e.item.field;
+
+            UIkit.modal(this.refs.modalField, {bgclose:false}).show()
         }
 
         togglelist(e) {

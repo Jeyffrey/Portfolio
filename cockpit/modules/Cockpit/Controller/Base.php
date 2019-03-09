@@ -1,4 +1,12 @@
 <?php
+/**
+ * This file is part of the Cockpit project.
+ *
+ * (c) Artur Heinze - 🅰🅶🅴🅽🆃🅴🅹🅾, http://agentejo.com
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
 
 namespace Cockpit\Controller;
 
@@ -41,22 +49,13 @@ class Base extends \Cockpit\AuthController {
         return $widgets;
     }
 
-    public function savemenu() {
-
-        $order = $this->app->param('order', []);
-
-        $this->app->storage->setKey('cockpit/options', 'app.menu.order.'.$this->user["_id"], $order);
-
-        return $order;
-    }
-
     public function search() {
 
-        $query = $this->app->param("search", false);
+        $query = $this->app->param('search', false);
         $list  = new \ArrayObject([]);
 
         if ($query) {
-            $this->app->trigger("cockpit.search", [$query, $list]);
+            $this->app->trigger('cockpit.search', [$query, $list]);
         }
 
         return json_encode($list->getArrayCopy());

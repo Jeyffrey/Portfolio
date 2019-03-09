@@ -1,8 +1,13 @@
 <?php
-
 /**
- * Class DataCollection
+ * This file is part of the Cockpit project.
+ *
+ * (c) Artur Heinze - 🅰🅶🅴🅽🆃🅴🅹🅾, http://agentejo.com
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
  */
+
 class DataCollection implements \Iterator {
 
     protected $position = 0;
@@ -92,10 +97,11 @@ class DataCollection implements \Iterator {
      */
     public function filter($criteria) {
 
-        $criteria = create_function('$item', "return ({$criteria});");
+        if (is_string($criteria)) {
+            eval('$criteria = function($item) { return ('.$criteria.'); };');
+        }
 
         return $this->setItems(array_values(array_filter($this->items, $criteria)));
-
     }
 
     /**
@@ -110,9 +116,7 @@ class DataCollection implements \Iterator {
 
         $getValue = function($page, $expr) use($cache) {
 
-            if (!isset($cache[$expr])) {
-                $cache[$expr] = create_function('$item', "return ({$expr});");
-            }
+            eval('$cache[$expr] = function($item) { return ('.$expr.'); };');
 
             $value = $cache[$expr]($page);
 

@@ -56,7 +56,7 @@
             options.title ? '<div class="uk-modal-header"><h2>'+options.title+'</h2></div>':'',
             text ? '<div class="uk-modal-content uk-form">'+(options.title ? text : '<h2>'+text+'</h2>')+'</div>':'',
             '<div class="uk-margin-small-top uk-modal-content uk-form"><p><input type="text" class="uk-width-1-1"></p></div>',
-            '<div class="uk-modal-footer uk-text-right"><button class="uk-button uk-button-link uk-button-large uk-modal-close">'+options.labels.Cancel+'</button> <button class="uk-button uk-button-link js-modal-ok">'+options.labels.Ok+'</button></div>'
+            '<div class="uk-modal-footer uk-text-right"><button class="uk-button uk-button-link uk-button-large uk-modal-close">'+options.labels.Cancel+'</button> <button class="uk-button uk-button-link uk-button-large js-modal-ok">'+options.labels.Ok+'</button></div>'
         ]).join(""), options),
 
         input = modal.element.find("input[type='text']").val(value || '').on('keyup', function(e){
@@ -80,41 +80,31 @@
         modal.show();
     };
 
-    $(document).on('stop.uk.sortable', '[data-modules-menu]', function(){
-
-        var order = {};
-
-        $(this).children().each(function(idx){
-            order[this.getAttribute('data-route')] = idx+1;
-        });
-
-        App.request('/cockpit/savemenu',{order:order}).then(function(){
-
-        });
-    });
-
     // Material Ripple effect
     $('html').on('click', 'a, button, input, .ripple', function(e) {
 
-        var trigger = $(this), w = trigger.outerWidth(), h = trigger.outerHeight(), d = Math.min(w, h), surface;
+        var trigger = $(this), w = trigger.outerWidth(), h = trigger.outerHeight(),
+            d = Math.min(w, h), isInput = trigger.is('input'), surfaceCSS, surface;
 
-        surface = $('<div class="material-ripple"><div class="material-ink"></div></div>').css({
+        surfaceCSS = {
             top      : trigger.offset().top,
             left     : trigger.offset().left,
             width    : w,
             height   : h,
             overflow : d > 100 || trigger.is('button,.uk-button') ? 'hidden' : ''
-        }).appendTo('body');
+        };
+
+        surface = $('<div class="material-ripple"><div class="material-ink"></div></div>').css(surfaceCSS).appendTo('body');
 
         surface.find('.material-ink').css({
             height     : d,
             width      : d,
-            top        : Math.floor(h/2 - d/2)+'px',
-            left       : Math.floor(w/2 - d/2)+'px',
+            top: Math.floor(h/2 - d/2),
+            left: isInput ? e.clientX - surfaceCSS.left : Math.floor(w/2 - d/2),
             background : trigger.attr('ripple-color') || ''
         }).on('animationend', function() {
             surface.remove();
-        }).addClass("animate").width();
+        }).addClass('animate-ink').width();
 
         setTimeout(function(){
             surface.remove();

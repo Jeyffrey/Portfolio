@@ -8,23 +8,14 @@
 
     </style>
 
-    <codemirror name="codemirror" syntax="{ opts.syntax || 'text' }"></codemirror>
+    <codemirror ref="codemirror" syntax="{ opts.syntax || 'text' }" height="{ opts.height || 200 }"></codemirror>
 
     <script>
 
-        var $this = this, editor;
+        var $this = this, editor, idle;
 
         this.value  = null;
         this._field = null;
-
-        this.ready = new Promise(function(resolve){
-
-            $this.tags.codemirror.on('ready', function(){
-                editor = $this.codemirror.editor;
-                $this.isReady = true;
-                resolve();
-            });
-        });
 
         this.$updateValue = function(value, field) {
 
@@ -43,13 +34,27 @@
 
         this.on('mount', function(){
 
-            this.ready.then(function() {
+            this.refs.codemirror.on('ready', function(){
+                editor = $this.refs.codemirror.editor;
 
                 editor.setValue($this.value || '');
 
                 editor.on('change', function() {
                     $this.$setValue(editor.getValue(), true);
                 });
+
+                $this.isReady = true;
+                $this.update();
+
+                idle = setInterval(function() {
+
+                    if (App.$($this.root).is(':visible')) {
+                        if(!editor.hasFocus()) editor.refresh();
+                    } else {
+                        if (!App.$($this.root).closest('body').length) clearInterval(idle);
+                    }
+                }, 500)
+
             });
         });
 

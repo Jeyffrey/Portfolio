@@ -32,6 +32,7 @@
                 var xhr = new XMLHttpRequest();
 
                 xhr.open('post', url, true);
+                xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
 
                 url += (url.indexOf('?') !== -1 ? '&':'?') + 'nc=' + Math.random().toString(36).substr(2);
 
@@ -219,7 +220,7 @@
                     reject(url);
                 };
 
-                script.src = (url.match(/^http/) ? url : App.base(url))+'?v='+App.version;
+                script.src = (url.match(/^(\/\/|http)/) ? url : App.base(url))+'?v='+App.version;
 
                 document.getElementsByTagName('head')[0].appendChild(script);
 
@@ -233,7 +234,7 @@
               var link      = document.createElement('link');
                   link.type = 'text/css';
                   link.rel  = 'stylesheet';
-                  link.href = (url.match(/^http/) ? url : App.base(url))+'?v='+App.version;
+                  link.href = (url.match(/^(\/\/|http)/) ? url : App.base(url))+'?v='+App.version;
 
               document.getElementsByTagName('head')[0].appendChild(link);
 
@@ -254,7 +255,7 @@
                 img.onload  = function(){ resolve(url); };
                 img.onerror = function(){ reject(url); };
 
-                img.src = url;
+                img.src = (url.match(/^(\/\/|http)/) ? url : App.base(url))+'?v='+App.version;
             });
         }
     };

@@ -1,8 +1,8 @@
 <field-boolean>
 
-    <div name="container" class="uk-display-inline-block" onclick="{ toggle }" style="cursor:pointer;">
+    <div ref="container" class="uk-display-inline-block" onchange="{ toggle }" style="cursor:pointer;">
         <div class="uk-form-switch">
-            <input name="check" type="checkbox" id="{ id }"/>
+            <input ref="check" type="checkbox" id="{ id }"/>
             <label for="{ id }"></label>
         </div>
 
@@ -17,24 +17,26 @@
         this.id = 'switch'+Math.ceil(Math.random()*10000000);
 
         if (opts.cls) {
-            App.$(this.container).addClass(opts.cls);
+            App.$(this.refs.container).addClass(opts.cls);
         }
 
         this.value = opts.default || false;
 
         this.$updateValue = function(value) {
-
+            
             if (this.value != value) {
                 this.value = value;
                 this.update();
             }
-
-            document.getElementById(this.id).checked = Boolean(this.value);
+            this.refs.check.checked = Boolean(this.value);
 
         }.bind(this);
 
-        toggle() {
-            this.$setValue(!this.value);
+        toggle(e) {
+            e.preventDefault();
+            this.value = !Boolean(this.value);
+            this.refs.check.checked = this.value;
+            this.$setValue(this.value);
         }
 
     </script>

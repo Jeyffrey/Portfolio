@@ -1,4 +1,12 @@
 <?php
+/**
+ * This file is part of the Cockpit project.
+ *
+ * (c) Artur Heinze - 🅰🅶🅴🅽🆃🅴🅹🅾, http://agentejo.com
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
 
 namespace Cockpit\Helper;
 
@@ -29,10 +37,17 @@ class Admin extends \Lime\Helper {
         });
 
         $languages = [];
+        $langDefaultLabel = 'Default';
 
-        foreach($this->app->retrieve('config/languages', []) as $key => $val) {
+        foreach ($this->app->retrieve('config/languages', []) as $key => $val) {
+
             if (is_numeric($key)) $key = $val;
-            $languages[] = ['code'=>$key,'label'=>$val];
+
+            if ($key == 'default') {
+                $langDefaultLabel = $val;
+            } else {
+                $languages[] = ['code'=>$key, 'label'=>$val];
+            }
         }
 
         $this->data->extend([
@@ -68,10 +83,15 @@ class Admin extends \Lime\Helper {
              */
             'extract' => [
                 'user'      => $this->user,
-                'locale'    => $this->app('i18n')->locale,
+                'locale'    => $this->app->helper('i18n')->locale,
                 'site_url'  => $this->app->pathToUrl('site:'),
                 'languages' => $languages,
-                'groups'    => $this->app->helper('acl')->getGroups()
+                'languageDefaultLabel' => $langDefaultLabel,
+                'groups' => $this->app->helper('acl')->getGroups(),
+
+                'acl' => [
+                    'finder' => $this->app->module('cockpit')->hasaccess('cockpit', 'finder')
+                ]
             ]
         ]);
     }
@@ -138,7 +158,7 @@ class Admin extends \Lime\Helper {
         return $this->app->module('cockpit')->updateUserOption($key, $value);
     }
 
-    public function denyRequest($message = null) {
+    public function denyRequest() {
 
         if ($this->app->module('cockpit')->getUser()) {
             $this->app->response->status = 401;

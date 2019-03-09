@@ -1,4 +1,12 @@
 <?php
+/**
+ * This file is part of the Cockpit project.
+ *
+ * (c) Artur Heinze - 🅰🅶🅴🅽🆃🅴🅹🅾, http://agentejo.com
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
 
 namespace MongoHybrid;
 
@@ -24,6 +32,17 @@ class MongoLegacy {
         $name = str_replace('/', '_', $name);
 
         return $this->db->selectCollection($name);
+    }
+
+    public function dropCollection($name, $db = null){
+
+        if ($db) {
+            $name = "{$db}/{$name}";
+        }
+
+        $name = str_replace('/', '_', $name);
+
+        return $this->db->dropCollection($name);
     }
 
     public function findOneById($collection, $id){
@@ -142,7 +161,7 @@ class MongoLegacy {
         }
 
         foreach ($data as $k => $v) {
-            
+
             if (is_array($data[$k])) {
                 $data[$k] = $this->_fixMongoIds($data[$k]);
             }
@@ -150,11 +169,11 @@ class MongoLegacy {
             if ($k === '_id') {
 
                 if (is_string($v)) {
-                    
+
                     $v = new \MongoId($v);
 
                 } elseif (is_array($v) && isset($v['$in'])) {
-                    
+
                     foreach ($v['$in'] as &$id) {
                         if (is_string($id)) {
                             $id = new \MongoId($id);

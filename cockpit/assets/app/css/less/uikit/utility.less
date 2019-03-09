@@ -35,13 +35,24 @@
 // Scrollable
 // ========================================================================
 
-.hook-scrollable-box() {}
+.hook-scrollable-box() {
+    border-left: none;
+    border-right: none;
+    border-color: rgba(0, 0, 0, .05);
+}
 
 
 // Miscellaneous
 // ========================================================================
 
 .hook-utility-misc() {
+
+    .uk-position-center {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translateX(-50%) translateY(-50%);
+    }
 
     .uk-viewport-height-1-2 {
         min-height: 50vh;
@@ -51,11 +62,19 @@
         min-height: 30vh;
     }
 
-    .uk-bg-light { background: @global-light-background; }
-    .uk-bg-primary { background: @global-primary-background; }
-    .uk-bg-success { background: @global-success-background;}
-    .uk-bg-danger { background: @global-danger-background;}
+    .uk-bg-dark { background: @global-dark-background !important; }
+    .uk-bg-light { background: @global-light-background !important; }
+    .uk-bg-primary { background: @global-primary-background !important; }
+    .uk-bg-success { background: @global-success-background !important; }
+    .uk-bg-danger { background: @global-danger-background !important;}
 
+    .uk-bg-transparent-pattern {
+        background-color: rgba(0,0,0,0);
+        background-image: linear-gradient(45deg, rgba(0,0,0,.1) 25%, transparent 25%, transparent 75%, rgba(0,0,0,.1) 75%, rgba(0,0,0,.1)),
+        linear-gradient(45deg, rgba(0,0,0,.1) 25%, transparent 25%, transparent 75%, rgba(0,0,0,.1) 75%, rgba(0,0,0,.1));
+        background-size: 20px 20px;
+        background-position: 0 0, 10px 10px;
+    }
 
     svg.inherit-color * {
         fill: currentColor;

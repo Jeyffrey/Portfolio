@@ -1,9 +1,29 @@
 <?php
+/**
+ * This file is part of the Cockpit project.
+ *
+ * (c) Artur Heinze - 🅰🅶🅴🅽🆃🅴🅹🅾, http://agentejo.com
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
 
 /**
  * Cockpit start time
  */
 define('COCKPIT_START_TIME', microtime(true));
+
+if (!defined('COCKPIT_CLI')) {
+    define('COCKPIT_CLI', PHP_SAPI == 'cli');
+}
+
+// Autoload vendor libs
+include(__DIR__.'/lib/vendor/autoload.php');
+
+// include core classes for better performance
+include(__DIR__.'/lib/Lime/App.php');
+include(__DIR__.'/lib/LimeExtra/App.php');
+include(__DIR__.'/lib/LimeExtra/Controller.php');
 
 /*
  * Autoload from lib folder (PSR-0)
@@ -13,6 +33,14 @@ spl_autoload_register(function($class){
     $class_path = __DIR__.'/lib/'.str_replace('\\', '/', $class).'.php';
     if(file_exists($class_path)) include_once($class_path);
 });
+
+// load .env file if exists
+DotEnv::load(__DIR__);
+
+// check for custom defines
+if (file_exists(__DIR__.'/defines.php')) {
+    include(__DIR__.'/defines.php');
+}
 
 /*
  * Collect needed paths
@@ -33,13 +61,22 @@ $COCKPIT_BASE_ROUTE  = $COCKPIT_BASE_URL;
 /*
  * SYSTEM DEFINES
  */
-if (!defined('COCKPIT_ADMIN'))       define('COCKPIT_ADMIN'      , 0);
-if (!defined('COCKPIT_REST'))        define('COCKPIT_REST'       , COCKPIT_ADMIN && strpos($_SERVER['REQUEST_URI'], $COCKPIT_BASE_URL.'/api/')!==false ? 1:0);
-if (!defined('COCKPIT_DIR'))         define('COCKPIT_DIR'        , $COCKPIT_DIR);
-if (!defined('COCKPIT_DOCS_ROOT'))   define('COCKPIT_DOCS_ROOT'  , $COCKPIT_DOCS_ROOT);
-if (!defined('COCKPIT_BASE_URL'))    define('COCKPIT_BASE_URL'   , $COCKPIT_BASE_URL);
-if (!defined('COCKPIT_BASE_ROUTE'))  define('COCKPIT_BASE_ROUTE' , $COCKPIT_BASE_ROUTE);
-if (!defined('COCKPIT_STORAGE_FOLDER'))  define('COCKPIT_STORAGE_FOLDER' , COCKPIT_DIR . '/storage');
+if (!defined('COCKPIT_ADMIN'))                  define('COCKPIT_ADMIN'          , 0);
+if (!defined('COCKPIT_DOCS_ROOT'))              define('COCKPIT_DOCS_ROOT'      , $COCKPIT_DOCS_ROOT);
+if (!defined('COCKPIT_BASE_URL'))               define('COCKPIT_BASE_URL'       , $COCKPIT_BASE_URL);
+if (!defined('COCKPIT_API_REQUEST'))            define('COCKPIT_API_REQUEST'    , COCKPIT_ADMIN && strpos($_SERVER['REQUEST_URI'], COCKPIT_BASE_URL.'/api/')!==false ? 1:0);
+if (!defined('COCKPIT_DIR'))                    define('COCKPIT_DIR'            , $COCKPIT_DIR);
+if (!defined('COCKPIT_SITE_DIR'))               define('COCKPIT_SITE_DIR'       , $COCKPIT_DIR == COCKPIT_DOCS_ROOT ? $COCKPIT_DIR : dirname(COCKPIT_DIR));
+if (!defined('COCKPIT_CONFIG_DIR'))             define('COCKPIT_CONFIG_DIR'     , COCKPIT_DIR.'/config');
+if (!defined('COCKPIT_BASE_ROUTE'))             define('COCKPIT_BASE_ROUTE'     , $COCKPIT_BASE_ROUTE);
+if (!defined('COCKPIT_STORAGE_FOLDER'))         define('COCKPIT_STORAGE_FOLDER' , COCKPIT_DIR.'/storage');
+if (!defined('COCKPIT_PUBLIC_STORAGE_FOLDER'))  define('COCKPIT_PUBLIC_STORAGE_FOLDER' , COCKPIT_DIR.'/storage');
+
+if (!defined('COCKPIT_CONFIG_PATH')) {
+    $_configpath = COCKPIT_CONFIG_DIR.'/config.'.(file_exists(COCKPIT_CONFIG_DIR.'/config.php') ? 'php':'yaml');
+    define('COCKPIT_CONFIG_PATH', $_configpath);
+}
+
 
 function cockpit($module = null) {
 
@@ -50,11 +87,6 @@ function cockpit($module = null) {
         $customconfig = [];
 
         // load custom config
-        if (!defined('COCKPIT_CONFIG_PATH')) {
-            $_configpath = COCKPIT_DIR."/config/config.".(file_exists(COCKPIT_DIR."/config/config.php") ? 'php':'yaml');
-            define('COCKPIT_CONFIG_PATH', $_configpath);
-        }
-
         if (file_exists(COCKPIT_CONFIG_PATH)) {
             $customconfig = preg_match('/\.yaml$/', COCKPIT_CONFIG_PATH) ? Spyc::YAMLLoad(COCKPIT_CONFIG_PATH) : include(COCKPIT_CONFIG_PATH);
         }
@@ -62,37 +94,46 @@ function cockpit($module = null) {
         // load config
         $config = array_replace_recursive([
 
-            'debug'        => preg_match('/(localhost|::1|\.dev)$/', $_SERVER['SERVER_NAME']),
+            'debug'        => preg_match('/(localhost|::1|\.dev)$/', @$_SERVER['SERVER_NAME']),
             'app.name'     => 'Cockpit',
             'base_url'     => COCKPIT_BASE_URL,
             'base_route'   => COCKPIT_BASE_ROUTE,
             'docs_root'    => COCKPIT_DOCS_ROOT,
             'session.name' => md5(__DIR__),
+            'session.init' => (COCKPIT_ADMIN && !COCKPIT_API_REQUEST) ? true : false,
             'sec-key'      => 'c3b40c4c-db44-s5h7-a814-b4931a15e5e1',
             'i18n'         => 'en',
-            'database'     => [ "server" => "mongolite://".(COCKPIT_STORAGE_FOLDER."/data"), "options" => ["db" => "cockpitdb"] ],
-            'memory'       => [ "server" => "redislite://".(COCKPIT_STORAGE_FOLDER."/data/cockpit.memory.sqlite"), "options" => [] ],
+            'database'     => ['server' => 'mongolite://'.(COCKPIT_STORAGE_FOLDER.'/data'), 'options' => ['db' => 'cockpitdb'], 'driverOptions' => [] ],
+            'memory'       => ['server' => 'redislite://'.(COCKPIT_STORAGE_FOLDER.'/data/cockpit.memory.sqlite'), 'options' => [] ],
 
-            'paths'        => [
-                '#root'    => COCKPIT_DIR,
-                '#storage' => COCKPIT_STORAGE_FOLDER,
-                '#data'    => COCKPIT_STORAGE_FOLDER.'/data',
-                '#cache'   => COCKPIT_STORAGE_FOLDER.'/cache',
-                '#tmp'     => COCKPIT_STORAGE_FOLDER.'/tmp',
-                '#thumbs'  => COCKPIT_STORAGE_FOLDER.'/thumbs',
-                '#uploads' => COCKPIT_STORAGE_FOLDER.'/uploads',
-                '#modules' => COCKPIT_DIR.'/modules',
-                '#addons' => COCKPIT_DIR.'/addons',
-                '#config'  => defined('COCKPIT_CONFIG_PATH') ? dirname(COCKPIT_CONFIG_PATH) : COCKPIT_DIR.'/config',
-                'assets'   => COCKPIT_DIR.'/assets',
-                'site'     => COCKPIT_DIR == COCKPIT_DOCS_ROOT ? COCKPIT_DIR : dirname(COCKPIT_DIR)
-            ]
+            'paths'         => [
+                '#root'     => COCKPIT_DIR,
+                '#storage'  => COCKPIT_STORAGE_FOLDER,
+                '#pstorage' => COCKPIT_PUBLIC_STORAGE_FOLDER,
+                '#data'     => COCKPIT_STORAGE_FOLDER.'/data',
+                '#cache'    => COCKPIT_STORAGE_FOLDER.'/cache',
+                '#tmp'      => COCKPIT_STORAGE_FOLDER.'/tmp',
+                '#thumbs'   => COCKPIT_PUBLIC_STORAGE_FOLDER.'/thumbs',
+                '#uploads'  => COCKPIT_PUBLIC_STORAGE_FOLDER.'/uploads',
+                '#modules'  => COCKPIT_DIR.'/modules',
+                '#addons'   => COCKPIT_DIR.'/addons',
+                '#config'   => COCKPIT_CONFIG_DIR,
+                'assets'    => COCKPIT_DIR.'/assets',
+                'site'      => COCKPIT_SITE_DIR
+            ],
+
+            'filestorage' => [],
 
         ], is_array($customconfig) ? $customconfig : []);
 
+        // make sure Cockpit module is not disabled
+        if (isset($config['modules.disabled']) && in_array('Cockpit', $config['modules.disabled'])) {
+            array_splice($config['modules.disabled'], array_search('Cockpit', $config['modules.disabled']), 1);
+        }
+
         $app = new LimeExtra\App($config);
 
-        $app["config"] = $config;
+        $app['config'] = $config;
 
         // register paths
         foreach ($config['paths'] as $key => $path) {
@@ -101,8 +142,64 @@ function cockpit($module = null) {
 
         // nosql storage
         $app->service('storage', function() use($config) {
-            $client = new MongoHybrid\Client($config['database']['server'], $config['database']['options']);
+            $client = new MongoHybrid\Client($config['database']['server'], $config['database']['options'], $config['database']['driverOptions']);
             return $client;
+        });
+
+        // file storage
+        $app->service('filestorage', function() use($config, $app) {
+
+            $storages = array_replace_recursive([
+
+                'root' => [
+                    'adapter' => 'League\Flysystem\Adapter\Local',
+                    'args' => [$app->path('#root:')],
+                    'mount' => true,
+                    'url' => $app->pathToUrl('#root:', true)
+                ],
+
+                'site' => [
+                    'adapter' => 'League\Flysystem\Adapter\Local',
+                    'args' => [$app->path('site:')],
+                    'mount' => true,
+                    'url' => $app->pathToUrl('site:', true)
+                ],
+
+                'tmp' => [
+                    'adapter' => 'League\Flysystem\Adapter\Local',
+                    'args' => [$app->path('#tmp:')],
+                    'mount' => true,
+                    'url' => $app->pathToUrl('#tmp:', true)
+                ],
+
+                'thumbs' => [
+                    'adapter' => 'League\Flysystem\Adapter\Local',
+                    'args' => [$app->path('#thumbs:')],
+                    'mount' => true,
+                    'url' => $app->pathToUrl('#thumbs:', true)
+                ],
+
+                'uploads' => [
+                    'adapter' => 'League\Flysystem\Adapter\Local',
+                    'args' => [$app->path('#uploads:')],
+                    'mount' => true,
+                    'url' => $app->pathToUrl('#uploads:', true)
+                ],
+
+                'assets' => [
+                    'adapter' => 'League\Flysystem\Adapter\Local',
+                    'args' => [$app->path('#uploads:')],
+                    'mount' => true,
+                    'url' => $app->pathToUrl('#uploads:', true)
+                ]
+
+            ], $config['filestorage']);
+
+            $app->trigger('cockpit.filestorages.init', [&$storages]);
+
+            $filestorage = new FileStorage($storages);
+
+            return $filestorage;
         });
 
         // key-value storage
@@ -112,28 +209,56 @@ function cockpit($module = null) {
         });
 
         // mailer service
-        $app->service("mailer", function() use($app, $config){
+        $app->service('mailer', function() use($app, $config){
             $options   = isset($config['mailer']) ? $config['mailer']:[];
-            $mailer    = new \Mailer(isset($options["transport"]) ? $options['transport'] : 'mail', $options);
+            $mailer    = new \Mailer($options['transport'] ?? 'mail', $options);
             return $mailer;
         });
 
         // set cache path
         $tmppath = $app->path('#tmp:');
 
-        $app("cache")->setCachePath($tmppath);
+        $app('cache')->setCachePath($tmppath);
         $app->renderer->setCachePath($tmppath);
 
         // i18n
-        $app("i18n")->locale = isset($config['i18n']) ? $config['i18n'] : 'en';
+        $app('i18n')->locale = $config['i18n'] ?? 'en';
+
+        // handle exceptions
+        if (COCKPIT_ADMIN) {
+
+            set_exception_handler(function($exception) use($app) {
+
+                $error = [
+                    'message' => $exception->getMessage(),
+                    'file' => $exception->getFile(),
+                    'line' => $exception->getLine(),
+                ];
+
+                if ($app['debug']) {
+                    $body = $app->req_is('ajax') || COCKPIT_API_REQUEST ? json_encode(['error' => $error['message'], 'file' => $error['file'], 'line' => $error['line']]) : $app->render('cockpit:views/errors/500-debug.php', ['error' => $error]);
+                } else {
+                    $body = $app->req_is('ajax') || COCKPIT_API_REQUEST ? '{"error": "500", "message": "system error"}' : $app->view('cockpit:views/errors/500.php');
+                }
+
+                $app->trigger('error', [$error, $exception]);
+
+                header('HTTP/1.0 500 Internal Server Error');
+                echo $body;
+
+                if (function_exists('cockpit_error_handler')) {
+                    cockpit_error_handler($error);
+                }
+            });
+        }
 
         // load modules
         $app->loadModules(array_merge([
             COCKPIT_DIR.'/modules',  # core
             COCKPIT_DIR.'/addons' # addons
-        ], isset($config['loadmodules']) ? (array) $config['loadmodules'] : []));
+        ], $config['loadmodules'] ?? []));
 
-        // load config global bootstrap
+        // load config global bootstrap file
         if ($custombootfile = $app->path('#config:bootstrap.php')) {
             include($custombootfile);
         }

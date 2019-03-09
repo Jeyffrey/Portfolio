@@ -22,12 +22,12 @@
 
                 <ul class="uk-list uk-list-space uk-margin-top">
                     @foreach(array_slice($forms, 0, count($forms) > 5 ? 5: count($forms)) as $form)
-                    <li>
+                    <li class="uk-text-truncate">
                         <a href="@route('/forms/entries/'.$form['name'])">
 
                             <img class="uk-margin-small-right uk-svg-adjust" src="@url(isset($form['icon']) && $form['icon'] ? 'assets:app/media/icons/'.$form['icon']:'forms:icon.svg')" width="18px" alt="icon" data-uk-svg>
 
-                            {{ @$form['label'] ? $form['label'] : $form['name'] }}
+                            {{ htmlspecialchars(@$form['label'] ? $form['label'] : $form['name']) }}
                         </a>
                     </li>
                     @endforeach
@@ -35,9 +35,11 @@
 
             </div>
 
-            <div class="uk-panel-box-footer">
-                <a href="@route('/forms')">@lang('See all')</a>
+            @if(count($forms) > 5)
+            <div class="uk-panel-box-footer uk-text-center">
+                <a class="uk-button uk-button-small uk-button-link" href="@route('/forms')">@lang('Show all')</a>
             </div>
+            @endif
 
         @else
 
@@ -47,7 +49,7 @@
                     <img src="@url('forms:icon.svg')" width="30" height="30" alt="Forms" data-uk-svg />
                 </p>
 
-                @lang('No forms'). <a href="@route('/forms/form')">@lang('Create a form')</a>.
+                @lang('No forms')
 
             </div>
 

@@ -15,7 +15,7 @@
 
                 <div class="uk-margin">
                     <label class="uk-text-small">@lang('Name')</label>
-                    <input class="uk-width-1-1 uk-form-large" type="text" name="name" bind="form.name" pattern="[a-zA-Z0-9_]+" required>
+                    <input class="uk-width-1-1 uk-form-large" type="text" ref="name" bind="form.name" pattern="[a-zA-Z0-9_]+" required>
                     <p class="uk-text-small uk-text-muted" if="{!form._id}">
                         @lang('Only alpha nummeric value is allowed')
                     </p>
@@ -82,15 +82,17 @@
 
         </div>
 
-        <div class="uk-margin-large-top">
+        <cp-actionbar>
+            <div class="uk-container uk-container-center">
 
-            <button class="uk-button uk-button-large uk-button-primary uk-margin-right">@lang('Save')</button>
+                <button class="uk-button uk-button-large uk-button-primary">@lang('Save')</button>
 
-            <a href="@route('/forms')">
-                <span show="{ !form._id }">@lang('Cancel')</span>
-                <span show="{ form._id }">@lang('Close')</span>
-            </a>
-        </div>
+                <a class="uk-button uk-button-large uk-button-link" href="@route('/forms')">
+                    <span show="{ !form._id }">@lang('Cancel')</span>
+                    <span show="{ form._id }">@lang('Close')</span>
+                </a>
+            </div>
+        </cp-actionbar>
 
     </form>
 
@@ -103,6 +105,8 @@
         this.form = {{ json_encode($form) }};
 
         this.on('mount', function(){
+
+            this.trigger('update');
 
             // bind clobal command + save
             Mousetrap.bindGlobal(['command+s', 'ctrl+s'], function(e) {
@@ -117,7 +121,7 @@
 
             // lock name if saved
             if (this.form._id) {
-                this.name.disabled = true;
+                this.refs.name.disabled = true;
             }
         });
 
@@ -125,7 +129,9 @@
             this.form.icon = e.target.getAttribute('icon');
         }
 
-        submit() {
+        submit(e) {
+
+            if(e) e.preventDefault();
 
             var form = this.form;
 

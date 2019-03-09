@@ -1,5 +1,12 @@
 <?php
-
+/**
+ * This file is part of the Cockpit project.
+ *
+ * (c) Artur Heinze - 🅰🅶🅴🅽🆃🅴🅹🅾, http://agentejo.com
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
 
 /**
  * Helpers
@@ -10,64 +17,15 @@ include(__DIR__.'/Helper/Admin.php');
 
 $app->helpers['admin']  = 'Cockpit\\Helper\\Admin';
 
-
-// ACL
-$app('acl')->addResource('cockpit', [
-    'finder'
-]);
-
-
-// init acl groups + permissions + settings
-
-$app('acl')->addGroup('admin', true);
-
-if ($user = $app->module('cockpit')->getUser()) {
-
-    $aclsettings = $app->retrieve('config/groups', []);
-
-    /*
-    groups:
-        author:
-            $admin: false
-            $vars:
-                finder.path: /upload
-            cockpit:
-                finder: true
-
-    */
-
-    foreach ($aclsettings as $group => $settings) {
-
-        $isSuperAdmin = $settings === true || (isset($settings['$admin']) && $settings['$admin']);
-        $vars         = isset($settings['$vars']) ? $settings['$vars'] : [];
-
-        $app('acl')->addGroup($group, $isSuperAdmin, $vars);
-
-        if (!$isSuperAdmin && is_array($settings)) {
-
-            foreach ($settings as $resource => $actions) {
-
-                if ($resource == '$vars' || $resource == '$admin') continue;
-
-                foreach ((array)$actions as $action => $allow) {
-                    if ($allow) $app('acl')->allow($group, $resource, $action);
-                }
-            }
-        }
-    }
-}
-
 // init + load i18n
-$app('i18n')->locale = 'en';
 
-if ($user = $app->module('cockpit')->getUser()) {
+$app('i18n')->locale = $app->retrieve('i18n', 'en');
 
-    $locale = isset($user['i18n']) ? $user['i18n'] : $app->retrieve('i18n', 'en');
+$locale = $app->module('cockpit')->getUser('i18n', $app('i18n')->locale);
 
-    if ($translationspath = $app->path("#config:cockpit/i18n/{$locale}.php")) {
-        $app('i18n')->locale = $locale;
-        $app('i18n')->load($translationspath, $locale);
-    }
+if ($translationspath = $app->path("#config:cockpit/i18n/{$locale}.php")) {
+    $app('i18n')->locale = $locale;
+    $app('i18n')->load($translationspath, $locale);
 }
 
 $app->bind('/cockpit.i18n.data', function() {
@@ -84,11 +42,9 @@ $app->bind('/cockpit.i18n.data', function() {
 $assets = [
 
     // polyfills
-    'assets:polyfills/es6-shim.js',
     'assets:polyfills/dom4.js',
-    'assets:polyfills/fetch.js',
-    'assets:polyfills/web-animations.min.js',
-    'assets:polyfills/pointer-events.js',
+    'assets:polyfills/document-register-element.js',
+    'assets:polyfills/URLSearchParams.js',
 
     // libs
     'assets:lib/moment.js',
@@ -110,6 +66,9 @@ $assets = [
     // app
     'assets:app/js/app.js',
     'assets:app/js/app.utils.js',
+    'assets:app/js/codemirror.js',
+    'assets:app/components/cp-actionbar.js',
+    'assets:app/components/cp-fieldcontainer.js',
     'cockpit:assets/components.js',
     'cockpit:assets/cockpit.js',
 
@@ -117,8 +76,8 @@ $assets = [
 ];
 
 // load custom css style
-if ($app->path('config:cockpit/style.css')) {
-    $assets[] = 'config:cockpit/style.css';
+if ($app->path('#config:cockpit/style.css')) {
+    $assets[] = '#config:cockpit/style.css';
 }
 
 $app['app.assets.base'] = $assets;
@@ -149,6 +108,41 @@ $app->bindClass('Cockpit\\Controller\\Webhooks', 'webhooks');
 
 
 /**
+ * Check user session for backend ui
+ */
+$app->on('cockpit.auth.setuser', function($user, $permanent) {
+    if (!$permanent) return;
+    $this('session')->write('cockpit.session.time', time());
+});
+
+// update session time
+$app->on('admin.init', function() {
+    if ($this['route'] != '/check-backend-session' && isset($_SESSION['cockpit.session.time'])) {
+        $_SESSION['cockpit.session.time'] = time();
+    }
+});
+
+// check + validate session time
+$app->bind('/check-backend-session', function() {
+
+    $user = $this->module('cockpit')->getUser();
+    $status = true;
+
+    if (!$user) {
+        $status = false;
+    }
+
+    // check for inactivity: 45min by default
+    if ($status && isset($_SESSION['cockpit.session.time']) && ($_SESSION['cockpit.session.time'] + $this->retrieve('session.lifetime', 2700) < time())) {
+        $this->module('cockpit')->logout();
+        $status = false;
+    }
+
+    return ['status' => $status];
+});
+
+
+/**
  * on admint init
  */
 $app->on('admin.init', function() {
@@ -160,7 +154,7 @@ $app->on('admin.init', function() {
         $this["user"] = $this->module('cockpit')->getUser();
         return $this->view('cockpit:views/base/finder.php');
 
-    }, $this->module("cockpit")->hasaccess('cockpit', 'media'));
+    }, $this->module('cockpit')->hasaccess('cockpit', 'finder'));
 
 }, 0);
 
@@ -171,7 +165,7 @@ $app->on('admin.init', function() {
 
 $app->on('cockpit.search', function($search, $list) {
 
-    if (!$this->module('cockpit')->hasaccess('accounts')) {
+    if (!$this->module('cockpit')->hasaccess('cockpit', 'accounts')) {
         return;
     }
 
@@ -190,14 +184,14 @@ $app->on('cockpit.search', function($search, $list) {
 // dashboard widgets
 
 
-$app->on("admin.dashboard.widgets", function($widgets) {
+$app->on('admin.dashboard.widgets', function($widgets) {
 
-    $title   = $this("i18n")->get("Today");
+    $title   = $this('i18n')->get('Today');
 
     $widgets[] = [
-        "name"    => "time",
-        "content" => $this->view("cockpit:views/widgets/datetime.php", compact('title')),
-        "area"    => 'main'
+        'name'    => 'time',
+        'content' => $this->view('cockpit:views/widgets/datetime.php', compact('title')),
+        'area'    => 'main'
     ];
 
 }, 100);
@@ -205,51 +199,35 @@ $app->on("admin.dashboard.widgets", function($widgets) {
 /**
  * handle error pages
  */
-$app->on("after", function() {
+$app->on('after', function() {
 
     switch ($this->response->status) {
-        case 500:
-
-            if ($this['debug']) {
-
-                if ($this->req_is('ajax')) {
-                    $this->response->body = json_encode(['error' => json_decode($this->response->body, true)]);
-                } else {
-                    $this->response->body = $this->render("cockpit:views/errors/500-debug.php", ['error' => json_decode($this->response->body, true)]);
-                }
-
-            } else {
-
-                if ($this->req_is('ajax')) {
-                    $this->response->body = '{"error": "500", "message": "system error"}';
-                } else {
-                    $this->response->body = $this->view("cockpit:views/errors/500.php");
-                }
-            }
-
-            $this->trigger("cockpit.request.error", ['500']);
-            break;
 
         case 401:
 
-            if ($this->req_is('ajax')) {
+            if ($this->req_is('ajax') || COCKPIT_API_REQUEST) {
                 $this->response->body = '{"error": "401", "message":"Unauthorized"}';
             } else {
-                $this->response->body = $this->view("cockpit:views/errors/401.php");
+                $this->response->body = $this->view('cockpit:views/errors/401.php');
             }
 
-            $this->trigger("cockpit.request.error", ['401']);
+            $this->trigger('cockpit.request.error', ['401']);
             break;
 
         case 404:
 
-            if ($this->req_is('ajax')) {
+            if ($this->req_is('ajax') || COCKPIT_API_REQUEST) {
                 $this->response->body = '{"error": "404", "message":"File not found"}';
             } else {
-                $this->response->body = $this->view("cockpit:views/errors/404.php");
+
+                if (!$this->module('cockpit')->getUser()) {
+                    $this->reroute('/auth/login');
+                }
+
+                $this->response->body = $this->view('cockpit:views/errors/404.php');
             }
 
-            $this->trigger("cockpit.request.error", ['404']);
+            $this->trigger('cockpit.request.error', ['404']);
             break;
     }
 

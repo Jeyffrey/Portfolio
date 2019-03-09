@@ -1,4 +1,12 @@
 <?php
+/**
+ * This file is part of the Cockpit project.
+ *
+ * (c) Artur Heinze - 🅰🅶🅴🅽🆃🅴🅹🅾, http://agentejo.com
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
 
 namespace Lime\Helper;
 
@@ -34,9 +42,21 @@ class Utils extends \Lime\Helper {
     public function fixRelativeUrls($content, $base = '/'){
 
         $protocols = '[a-zA-Z0-9\-]+:';
-
         $regex     = '#\s+(src|href|poster)="(?!/|' . $protocols . '|\#|\')([^"]*)"#m';
-        $content   = preg_replace($regex, " $1=\"$base\$2\"", $content);
+
+        preg_match_all($regex, $content, $matches);
+
+        if (isset($matches[0])) {
+
+            foreach ($matches[0] as $i => $match) {
+
+                if (trim($matches[2][$i])) {
+                    $content = str_replace($match, " {$matches[1][$i]}=\"{$base}{$matches[2][$i]}\"", $content);
+                }
+            }
+        }
+
+        //$content = preg_replace($regex, " $1=\"$base\$2\"", $content);
 
         // Background image.
         $regex     = '#style\s*=\s*[\'\"](.*):\s*url\s*\([\'\"]?(?!/|' . $protocols . '|\#)([^\)\'\"]+)[\'\"]?\)#m';
@@ -204,16 +224,18 @@ class Utils extends \Lime\Helper {
 
 		return $ret;
 	}
-	
+
 	/**
 	* Get content from url source.
 	*
-	* @param   string  $url 
+	* @param   string  $url
 	* @return  string
 	*/
-	public function url_get_contents ($url) {
+	public function url_get_contents($url) {
+
         $content = '';
-        if (function_exists('curl_exec')){
+
+		if (function_exists('curl_exec')){
             $conn = curl_init($url);
             curl_setopt($conn, CURLOPT_SSL_VERIFYPEER, true);
             curl_setopt($conn, CURLOPT_FRESH_CONNECT,  true);
@@ -234,4 +256,190 @@ class Utils extends \Lime\Helper {
         }
         return $content;
 	}
+
+	public function buildTree(array $elements, $options = [], $parentId = null) {
+
+        $options = array_merge([
+            'parent_id_column_name' => '_pid',
+            'children_key_name' => 'children',
+            'id_column_name' => '_id',
+			'sort_column_name' => null
+        ], $options);
+
+        $branch = [];
+
+        foreach ($elements as $element) {
+
+			$pid = isset($element[$options['parent_id_column_name']]) ? $element[$options['parent_id_column_name']] : null;
+
+            if ($pid == $parentId) {
+
+				$element[$options['children_key_name']] = [];
+                $children = $this->buildTree($elements, $options, $element[$options['id_column_name']]);
+
+                if ($children) {
+                    $element[$options['children_key_name']] = $children;
+                }
+
+                $branch[] = $element;
+            }
+        }
+
+		if ($options['sort_column_name']) {
+
+			usort($branch, function ($a, $b) use($options) {
+
+				$_a = isset($a[$options['sort_column_name']]) ? $a[$options['sort_column_name']] : null;
+				$_b = isset($b[$options['sort_column_name']]) ? $b[$options['sort_column_name']] : null;
+
+				if ($_a == $_b) {
+					return 0;
+				}
+
+				return ($_a < $_b) ? -1 : 1;
+			});
+		}
+
+        return $branch;
+    }
+
+	public function buildTreeList($items, $options = [], $parent = null, $result = null, $depth = 0, $path = '-') {
+
+		$options = array_merge([
+            'parent_id_column_name' => '_pid',
+            'id_column_name' => '_id'
+        ], $options);
+
+        if (!$result) {
+            $result = new ArrayObject([]);
+        }
+
+        foreach ($items as $key => &$item) {
+
+            if ($item[$options['parent_id_column_name']] == $parent) {
+                $item['_depth'] = $depth;
+                $item['_path'] = $path.$item[$options['id_column_name']];
+                $result[] = $item;
+                $idx = count($result) - 1;
+                unset($items[$key]);
+                $this->buildTreeList($items, $item[$options['id_column_name']], $result, $depth + 1, "{$path}{$item[$options['id_column_name']]}-");
+            }
+        }
+
+        if ($depth == 0) {
+
+            foreach ($result as $i => $item) {
+                $result[$i]['_isParent'] = isset($result[$i+1]) && $result[($i+1)][$options['parent_id_column_name']]===$item[$options['id_column_name']];
+            }
+        }
+
+        return $depth == 0 ? $result->getArrayCopy() : $result;
+    }
+
+	/**
+	 * get access token from header
+	 * */
+	public function getBearerToken() {
+
+	    $headers = null;
+	    $token   = null;
+
+	    if (isset($_SERVER['Authorization'])) {
+	        $headers = trim($_SERVER['Authorization']);
+	    } elseif (isset($_SERVER['HTTP_AUTHORIZATION'])) { //Nginx or fast CGI
+	        $headers = trim($_SERVER['HTTP_AUTHORIZATION']);
+	    } elseif (function_exists('apache_request_headers')) {
+	        $requestHeaders = apache_request_headers();
+	        // Server-side fix for bug in old Android versions (a nice side-effect of this fix means we don't care about capitalization for Authorization)
+	        $requestHeaders = array_combine(array_map('ucwords', array_keys($requestHeaders)), array_values($requestHeaders));
+	        if (isset($requestHeaders['Authorization'])) {
+	            $headers = trim($requestHeaders['Authorization']);
+	        }
+	    }
+
+	    // HEADER: Get the access token from the header
+	    if ($headers) {
+	        if (preg_match('/Bearer\s(\S+)/', $headers, $matches)) {
+	            $token = $matches[1];
+	        }
+	    }
+
+	    return $token;
+	}
+
+	/**
+	 * Check if string is valid email
+	 * @param  string  $email
+	 * @return boolean
+	 */
+	public function isEmail($email) {
+
+		if (function_exists('idn_to_ascii')) {
+			$email = @idn_to_ascii($email);
+		}
+
+		return (bool) filter_var($email, FILTER_VALIDATE_EMAIL);
+	}
+
+	/**
+	 * Cast boolean string values to boolean
+	 * @param  mixed $input
+	 * @return mixed
+	 */
+	public function fixStringBooleanValues(&$input) {
+
+        if (!is_array($input)) {
+
+			if (is_string($input) && ($input === 'true' || $input === 'false')) {
+				$input = filter_var($input, FILTER_VALIDATE_BOOLEAN);
+			}
+            return $input;
+        }
+
+        foreach ($input as $k => $v) {
+
+            if (is_array($input[$k])) {
+                $input[$k] = $this->fixStringBooleanValues($input[$k]);
+            }
+
+            if (is_string($v) && ($v === 'true' || $v === 'false')) {
+				$v = filter_var($v, FILTER_VALIDATE_BOOLEAN);
+            }
+
+            $input[$k] = $v;
+        }
+
+        return $input;
+    }
+
+	/**
+	 * Cast numeric string values to numbers
+	 * @param  mixed $input
+	 * @return mixed
+	 */
+	public function fixStringNumericValues(&$input) {
+
+        if (!is_array($input)) {
+
+			if (is_string($input) && is_numeric($input)) {
+				$input += 0;
+			}
+            return $input;
+        }
+
+        foreach ($input as $k => $v) {
+
+            if (is_array($input[$k])) {
+                $input[$k] = $this->fixStringNumericValues($input[$k]);
+            }
+
+            if (is_string($v) && is_numeric($v)) {
+                $v += 0;
+            }
+
+            $input[$k] = $v;
+        }
+
+        return $input;
+    }
 }

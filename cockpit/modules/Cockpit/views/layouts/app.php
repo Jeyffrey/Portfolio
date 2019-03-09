@@ -1,35 +1,34 @@
 <?php
 
-    $modules = new \SplPriorityQueue();
-    $menuorder = $app->storage->getKey('cockpit/options', 'app.menu.order.'.$app["user"]["_id"], []);
+    // Generate title
+    $_title = [];
 
-    if ($app('admin')->data['menu.modules']->count()) {
-
-        foreach($app('admin')->data['menu.modules'] as &$item) {
-            $modules->insert($item, -1* intval(\Lime\fetch_from_array($menuorder, $item['route'], 0)));
-        }
+    foreach (explode('/', $app['route']) as $part) {
+        if (trim($part)) $_title[] = $app('i18n')->get(ucfirst($part));
     }
 
 ?><!doctype html>
 <html lang="{{ $app('i18n')->locale }}" data-base="@base('/')" data-route="@route('/')" data-version="{{ $app['cockpit/version'] }}" data-locale="{{ $app('i18n')->locale }}">
 <head>
     <meta charset="UTF-8">
-    <title>{{ $app['app.name'] }}</title>
-    <link rel="icon" href="@base('/favicon.ico')" type="image/x-icon">
+    <title>{{ implode(' &raquo; ', $_title).(count($_title) ? ' - ':'').$app['app.name'] }}</title>
+    <link rel="icon" href="@base('/favicon.png')" type="image/png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
 
     <script>
         // App constants
-        var SITE_URL   = '{{ rtrim($app->pathToUrl('site:'), '/') }}';
-        var ASSETS_URL = '{{ rtrim($app->pathToUrl('#uploads:'), '/') }}';
+        var SITE_URL   = '{{ rtrim($app->filestorage->getUrl('site://'), '/') }}';
+        var ASSETS_URL = '{{ rtrim($app->filestorage->getUrl('assets://'), '/') }}';
     </script>
-    <script src="@base('assets:lib/fuc.js.php')"></script>
-    {{ $app->assets($app('admin')->data->get('assets'), $app['cockpit/version']) }}
+
+    {{ $app->assets($app('admin')->data->get('assets'), $app['debug'] ? time() : $app['cockpit/version']) }}
 
     <script src="@route('/cockpit.i18n.data')"></script>
 
     <script>
         App.$data = {{ json_encode($app('admin')->data->get('extract')) }};
+        UIkit.modal.labels.Ok = App.i18n.get(UIkit.modal.labels.Ok);
+        UIkit.modal.labels.Cancel = App.i18n.get(UIkit.modal.labels.Cancel);
     </script>
 
     @trigger('app.layout.header')
@@ -48,10 +47,10 @@
 
                     <div>
 
-                        <div class="uk-display-inline-block" data-uk-dropdown="delay:400">
+                        <div data-uk-dropdown="delay:400,mode:'click'">
 
-                            <a href="@route('/')" class="uk-link-muted uk-text-bold">
-                                <i class="uk-icon-bars"></i>
+                            <a href="@route('/')" class="uk-link-muted uk-text-bold app-name-link uk-flex uk-flex-middle">
+                                <span class="app-logo"></span>
                                 <span class="app-name">{{ $app['app.name'] }}</span>
                             </a>
 
@@ -62,7 +61,7 @@
                                     <div class="uk-width-medium-1-3">
 
                                         <div class="uk-margin">
-                                            <span class="uk-badge uk-badge-primary">@lang('System')</span>
+                                            <span class="uk-badge uk-badge-outline uk-text-primary">@lang('System')</span>
                                         </div>
 
                                         <ul class="uk-nav uk-nav-side uk-nav-dropdown app-nav">
@@ -94,13 +93,13 @@
                                     <div class="uk-grid-margin uk-width-medium-2-3">
 
                                         <div class="uk-margin">
-                                            <span class="uk-badge uk-badge-primary">@lang('Modules')</span>
+                                            <span class="uk-badge uk-badge-outline uk-text-primary">@lang('Modules')</span>
                                         </div>
 
                                         @if($app('admin')->data['menu.modules']->count())
-                                        <ul class="uk-sortable uk-grid uk-grid-match uk-grid-small uk-grid-gutter uk-text-center" data-modules-menu data-uk-sortable>
+                                        <ul class="uk-sortable uk-grid uk-grid-match uk-grid-small uk-grid-gutter uk-text-center">
 
-                                            @foreach(clone $modules as $item)
+                                            @foreach($app('admin')->data['menu.modules'] as $item)
                                             <li class="uk-width-1-2 uk-width-medium-1-3" data-route="{{ $item['route'] }}">
                                                 <a class="uk-display-block uk-panel-box {{ (@$item['active']) ? 'uk-bg-primary uk-contrast':'uk-panel-framed' }}" href="@route($item['route'])">
                                                     <div class="uk-svg-adjust">
@@ -137,7 +136,7 @@
                     @if($app('admin')->data['menu.modules']->count())
                     <div class="uk-hidden-small">
                         <ul class="uk-subnav app-modulesbar">
-                            @foreach($modules as $item)
+                            @foreach($app('admin')->data['menu.modules'] as $item)
                             <li>
                                 <a class="uk-svg-adjust {{ (@$item['active']) ? 'uk-active':'' }}" href="@route($item['route'])" title="@lang($item['label'])" data-uk-tooltip="offset:10">
                                     @if(preg_match('/\.svg$/i', $item['icon']))
@@ -147,7 +146,7 @@
                                     @endif
 
                                     @if($item['active'])
-                                    <span class="uk-text-small uk-margin-small-left uk-text-bolder">{{ $item['label'] }}</span>
+                                    <span class="uk-text-small uk-margin-small-left uk-text-bolder">@lang($item['label'])</span>
                                     @endif
                                 </a>
                             </li>
@@ -158,10 +157,10 @@
 
                     <div>
 
-                        <div data-uk-dropdown="delay:150">
+                        <div data-uk-dropdown="mode:'click'">
 
                             <a class="uk-display-block" href="@route('/accounts/account')" style="width:30px;height:30px;" riot-mount>
-                                <cp-gravatar email="{{ $app['user']['email'] }}" size="30" alt="{{ $app["user"]["name"] ? $app["user"]["name"] : $app["user"]["user"] }}"></cp-gravatar>
+                                <cp-gravatar email="{{ $app['user/email'] }}" size="30" alt="{{ $app["user/name"] ?? $app["user/user"] }}"></cp-gravatar>
                             </a>
 
                             <div class="uk-dropdown uk-dropdown-navbar uk-dropdown-flip">
@@ -169,7 +168,7 @@
                                     <li class="uk-nav-header uk-text-truncate">{{ $app["user"]["name"] ? $app["user"]["name"] : $app["user"]["user"] }}</li>
                                     <li><a href="@route('/accounts/account')">@lang('Account')</a></li>
                                     <li class="uk-nav-divider"></li>
-                                    <li><a href="@route('/auth/logout')">@lang('Logout')</a></li>
+                                    <li class="uk-nav-item-danger"><a href="@route('/auth/logout')">@lang('Logout')</a></li>
                                 </ul>
                             </div>
                         </div>
@@ -197,8 +196,14 @@
 
     <!-- RIOT COMPONENTS -->
     @foreach($app('admin')->data['components'] as $component)
-    <script type="riot/tag" src="@base($component)"></script>
+    <script type="riot/tag" src="@base($component)?nc={{ $app['debug'] ? time() : $app['cockpit/version'] }}"></script>
     @endforeach
+
+    @foreach($app('fs')->ls('*.tag', '#config:tags') as $component)
+    <script type="riot/tag" src="{{$app->pathToUrl('#config:tags/'.$component->getBasename())}}?nc={{ $app['debug'] ? time() : $app['cockpit/version'] }}"></script>
+    @endforeach
+
+    @render('cockpit:views/_partials/logincheck.php')
 
 </body>
 </html>

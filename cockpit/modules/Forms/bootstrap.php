@@ -1,7 +1,14 @@
 <?php
+/**
+ * This file is part of the Cockpit project.
+ *
+ * (c) Artur Heinze - 🅰🅶🅴🅽🆃🅴🅹🅾, http://agentejo.com
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
 
-
-$this->module("forms")->extend([
+$this->module('forms')->extend([
 
     'createForm' => function($name, $data = []) {
 
@@ -54,13 +61,15 @@ $this->module("forms")->extend([
 
         $data['_modified'] = time();
 
-        $form  = include($metapath);
-        $form  = array_merge($form, $data);
+        $form   = include($metapath);
+        $form   = array_merge($form, $data);
         $export = var_export($form, true);
 
         if (!$this->app->helper('fs')->write($metapath, "<?php\n return {$export};")) {
             return false;
         }
+
+        if (function_exists('opcache_reset')) opcache_reset();
 
         return $form;
     },
@@ -78,10 +87,10 @@ $this->module("forms")->extend([
 
         if ($form = $this->form($name)) {
 
-            $form = $forms["_id"];
+            $form = $form['_id'];
 
-            $this->app->helper("fs")->delete("#storage:forms/{$name}.form.php");
-            $this->app->storage->dropform("forms/{$form}");
+            $this->app->helper('fs')->delete("#storage:forms/{$name}.form.php");
+            $this->app->storage->dropCollection("forms/{$form}");
 
             return true;
         }
@@ -93,7 +102,7 @@ $this->module("forms")->extend([
 
         $stores = [];
 
-        foreach($this->app->helper("fs")->ls('*.form.php', '#storage:forms') as $path) {
+        foreach($this->app->helper('fs')->ls('*.form.php', '#storage:forms') as $path) {
 
             $store = include($path->getPathName());
 
@@ -141,7 +150,7 @@ $this->module("forms")->extend([
 
         if (!$forms) return false;
 
-        $form = $forms["_id"];
+        $form = $forms['_id'];
 
         return $this->app->storage->getform("forms/{$form}");
     },
@@ -152,7 +161,7 @@ $this->module("forms")->extend([
 
         if (!$forms) return false;
 
-        $form = $forms["_id"];
+        $form = $forms['_id'];
 
         // sort by custom order if form is sortable
         if (isset($forms['sortable']) && $forms['sortable'] && !isset($options['sort'])) {
@@ -168,7 +177,7 @@ $this->module("forms")->extend([
 
         if (!$forms) return false;
 
-        $form = $forms["_id"];
+        $form = $forms['_id'];
 
         return $this->app->storage->findOne("forms/{$form}", $criteria, $projection);
     },
@@ -180,19 +189,19 @@ $this->module("forms")->extend([
         if (!$forms) return false;
 
         $name       = $form;
-        $form       = $forms["_id"];
+        $form       = $forms['_id'];
         $data       = isset($data[0]) ? $data : [$data];
         $return     = [];
         $modified   = time();
 
-        foreach($data as $entry) {
+        foreach ($data as $entry) {
 
-            $isUpdate = isset($entry["_id"]);
+            $isUpdate = isset($entry['_id']);
 
             $entry['_modified'] = $modified;
 
             if (!$isUpdate) {
-                $entry["_created"] = $entry["_modified"];
+                $entry['_created'] = $entry['_modified'];
             }
 
             $this->app->trigger('forms.save.before', [$name, &$entry]);
@@ -215,7 +224,7 @@ $this->module("forms")->extend([
 
         if (!$forms) return false;
 
-        $form = $forms["_id"];
+        $form = $forms['_id'];
 
         return $this->app->storage->remove("forms/{$form}", $criteria);
     },
@@ -226,62 +235,46 @@ $this->module("forms")->extend([
 
         if (!$forms) return false;
 
-        $form = $forms["_id"];
+        $form = $forms['_id'];
 
         return $this->app->storage->count("forms/{$form}", $criteria);
     },
 
     'open' => function($name, $options = []) {
 
-        $options = array_merge(array(
-            "id"    => uniqid("form"),
-            "class" => "",
-            "csrf"  => $this->app->hash($name)
-        ), $options);
+        $options = array_merge([
+            'id'    => uniqid('form'),
+            'class' => '',
+            'csrf'  => $this->app->hash($name)
+        ], $options);
 
-        $this->app->renderView("forms:views/api/form.php", compact('name', 'options'));
+        $this->app->renderView('forms:views/api/form.php', compact('name', 'options'));
     },
-]);
 
+    'submit' => function($form, $data, $options = []) {
 
-$this->bind("/api/forms/submit/:form", function($params) {
+        $frm = $this->form($form);
 
-    $formname = $params["form"];
-
-    // Security check
-    if ($formhash = $this->param("__csrf", false)) {
-
-        if (!password_verify($formname, $formhash)) {
+        if (!$frm) {
             return false;
         }
-
-    } else {
-        return false;
-    }
-
-    $frm = $this->module('forms')->form($formname);
-
-    if (!$frm) {
-        return false;
-    }
-
-    if ($formdata = $this->param("form", false)) {
 
         // custom form validation
-
-        if ($this->path("#config:forms/{$formname}.php") && false===include($this->path("#config:forms/{$formname}.php"))) {
+        if ($this->app->path("#config:forms/{$form}.php") && false===include($this->app->path("#config:forms/{$form}.php"))) {
             return false;
         }
 
-        if (isset($frm["email_forward"]) && $frm["email_forward"]) {
+        $this->app->trigger('forms.submit.before', [$form, &$data, $frm, &$options]);
+
+        if (isset($frm['email_forward']) && $frm['email_forward']) {
 
             $emails          = array_map('trim', explode(',', $frm['email_forward']));
             $filtered_emails = [];
 
-            foreach($emails as $to){
+            foreach ($emails as $to){
 
                 // Validate each email address individually, push if valid
-                if (filter_var($to, FILTER_VALIDATE_EMAIL)){
+                if ($this->app->helper('utils')->isEmail($to)){
                     $filtered_emails[] = $to;
                 }
             }
@@ -291,16 +284,16 @@ $this->bind("/api/forms/submit/:form", function($params) {
                 $frm['email_forward'] = implode(',', $filtered_emails);
 
                 // There is an email template available
-                if ($template = $this->path("#config:forms/emails/{$formname}.php")) {
+                if ($template = $this->app->path("#config:forms/emails/{$form}.php")) {
 
-                    $body = $this->renderer->file($template, $formdata, false);
+                    $body = $this->app->renderer->file($template, ['data' => $data, 'frm' => $frm], false);
 
                 // Prepare template manually
                 } else {
 
                     $body = [];
 
-                    foreach ($formdata as $key => $value) {
+                    foreach ($data as $key => $value) {
                         $body[] = "<b>{$key}:</b>\n<br>";
                         $body[] = (is_string($value) ? $value:json_encode($value))."\n<br>";
                     }
@@ -308,35 +301,66 @@ $this->bind("/api/forms/submit/:form", function($params) {
                     $body = implode("\n<br>", $body);
                 }
 
-                $options = $this->param('form_options', []);
-                $this->mailer->mail($frm['email_forward'], $this->param("__mailsubject", "New form data for: ".$formname), $body, $options);
+                $formname = isset($frm['label']) && trim($frm['label']) ? $frm['label'] : $form;
+
+                try {
+                    $response = $this->app->mailer->mail($frm['email_forward'], $options['subject'] ?? "New form data for: {$formname}", $body, $options);
+                } catch (\Exception $e) {
+                    $response = $e->getMessage();
+                }
             }
         }
 
         if (isset($frm['save_entry']) && $frm['save_entry']) {
-
-            $entry = ['data' => $formdata];
-            $this->module('forms')->save($formname, $entry);
+            $entry = ['data' => $data];
+            $this->save($form, $entry);
         }
 
-        return json_encode($formdata);
+        $this->app->trigger('forms.submit.after', [$form, &$data, $frm]);
 
-    } else {
-        return "false";
+        return (isset($response) && $response !== true) ? ['error' => $response, 'data' => $data] : $data;
     }
-});
+]);
+
+// ACL
+$app('acl')->addResource('forms', ['create', 'delete', 'manage']);
 
 
 // REST
-if (COCKPIT_REST) {
+if (COCKPIT_API_REQUEST) {
 
-    $app->on('cockpit.rest.init', function($routes) {
-        $routes['forms'] = 'Forms\\Controller\\RestApi';
-    });
+    $this->bind('/api/forms/submit/:form', function($params) {
+
+        $form = $params["form"];
+        $formhash = $this->param('__csrf', false);
+
+        // Security check
+        if (!password_verify($form, $formhash)) {
+            return false;
+        }
+
+        if ($data = $this->param('form', false)) {
+            return $this->module('forms')->submit($form, $data, $this->param('form_options', []));
+        }
+
+        return false;
+
+    }, $this->param('__csrf', false));
+
+    if (!$this->param('__csrf', false)) {
+
+        $app->on('cockpit.rest.init', function($routes) {
+            $routes['forms'] = 'Forms\\Controller\\RestApi';
+        });
+    }
 }
 
 // ADMIN
-if (COCKPIT_ADMIN && !COCKPIT_REST) {
-
+if (COCKPIT_ADMIN && !COCKPIT_API_REQUEST) {
     include_once(__DIR__.'/admin.php');
+}
+
+// CLI
+if (COCKPIT_CLI) {
+    $this->path('#cli', __DIR__.'/cli');
 }

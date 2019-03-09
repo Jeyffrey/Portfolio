@@ -1,4 +1,12 @@
 <?php
+/**
+ * This file is part of the Cockpit project.
+ *
+ * (c) Artur Heinze - 🅰🅶🅴🅽🆃🅴🅹🅾, http://agentejo.com
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
 
 /**
  * Lexy class. Simple on the fly template parser class
@@ -364,8 +372,8 @@ class Lexy {
      */
     protected function compile_default_structures($value) {
 
-
-        $value = preg_replace('/(?(R)\((?:[^\(\)]|(?R))*\)|(?<!\w)(\s*)@(if|elseif|foreach|for|while)(\s*(?R)+))/', '$1<?php $2$3 { ?>', $value);
+        $value = preg_replace('/(?(R)\((?:[^\(\)]|(?R))*\)|(?<!\w)(\s*)@(if|foreach|for|while)(\s*(?R)+))/', '$1<?php $2 $3 { ?>', $value);
+        $value = preg_replace('/(\s*)@elseif(\s*\(.*\))/', '$1<?php } elseif$2 { ?>', $value);
         $value = preg_replace('/(\s*)@(endif|endforeach|endfor|endwhile)(\s*)/', '$1<?php } ?>$3', $value);
         $value = preg_replace('/(\s*)@(end)(\s*)/', '$1<?php } ?>$3', $value);
 
@@ -379,7 +387,8 @@ class Lexy {
      * @return string
      */
     protected function compile_else($value) {
-        return preg_replace('/(\s*)@(else)(\s*)/', '$1<?php }else{ ?>$3', $value);
+        $value = preg_replace('/(\s*)@(else)(\s*)/', '$1<?php } else { ?>$3', $value);
+        return $value;
     }
 
     /**
@@ -389,9 +398,8 @@ class Lexy {
      * @return string
      */
     protected function compile_unless($value) {
-        $value = preg_replace('/(\s*)@unless(\s*\(.*\))/', '$1<?php if ( ! ($2)): ?>', $value);
-        $value = str_replace('@endunless', '<?php endif; ?>', $value);
-
+        $value = preg_replace('/(\s*)@unless(\s*\(.*\))/', '$1<?php if (!($2)) { ?>', $value);
+        $value = str_replace('@endunless', '<?php } ?>', $value);
         return $value;
     }
 

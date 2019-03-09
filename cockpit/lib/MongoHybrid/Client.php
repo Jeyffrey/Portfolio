@@ -1,4 +1,12 @@
 <?php
+/**
+ * This file is part of the Cockpit project.
+ *
+ * (c) Artur Heinze - 🅰🅶🅴🅽🆃🅴🅹🅾, http://agentejo.com
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
 
 namespace MongoHybrid;
 
@@ -7,13 +15,13 @@ class Client {
     protected $driver;
     public $type;
 
-    public function __construct($server, $options=[]) {
+    public function __construct($server, $options=[], $driverOptions=[]) {
 
         if (strpos($server, 'mongodb://')===0) {
 
             $cls = class_exists('\MongoClient') ? 'MongoHybrid\\MongoLegacy':'MongoHybrid\\Mongo';
 
-            $this->driver = new $cls($server, $options);
+            $this->driver = new $cls($server, $options, $driverOptions);
             $this->type = 'mongodb';
         }
 

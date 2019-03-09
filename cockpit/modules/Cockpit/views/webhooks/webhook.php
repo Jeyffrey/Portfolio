@@ -58,7 +58,7 @@
                                 <div class="uk-flex-item-1"><input class="uk-width-1-1" type="text" placeholder="Key" bind="webhook.headers[{idx}].k"></div>
                                 <div>:</div>
                                 <div class="uk-flex-item-1"><input class="uk-width-1-1" type="text" placeholder="Value" bind="webhook.headers[{idx}].v"></div>
-                                <div><a onclick="{ parent.removeHeader}"><i class="uk-text-danger uk-icon-trash"></i></a></div>
+                                <div><a onclick="{ this.parent.removeHeader}"><i class="uk-text-danger uk-icon-trash"></i></a></div>
                             </div>
 
                             <div class="uk-margin uk-text-center {!webhook.headers.length && 'uk-placeholder'}">
@@ -91,25 +91,40 @@
                         </thead>
                         <tbody>
                             <tr each="{event,idx in webhook.events}">
-                                <td><i class="uk-icon-bolt uk-margin-small-right uk-text-primary"></i> {event}</td>
+                                <td>
+                                    <div class="uk-flex uk-flex-middle">
+                                        <div class="uk-margin-small-right">
+                                            <i class="uk-icon-bolt uk-text-primary"></i>
+                                        </div>
+                                        <div class="uk-flex-item-1">
+                                            <input class="uk-width-1-1 uk-form-blank" type="text" bind="webhook.events[{idx}]">
+                                        </div>
+                                    </div>
+
+                                 </td>
                                 <td><a class="uk-text-danger" onclick="{ removeEvent }"><i class="uk-icon-trash"></i></a></td>
                             </tr>
                         </tbody>
                     </table>
 
                     <div class="uk-margin uk-form">
-                        <div class="uk-form-icon uk-width-1-1 uk-display-block">
+                        <div class="uk-form-icon uk-autocomplete uk-width-1-1 uk-display-block" ref="eventAutocomplete">
                             <i class="uk-icon-bolt"></i>
-                            <input class="uk-width-1-1 uk-form-large" type="text" name="event" placeholder="@lang('Add event...')">
+                            <input class="uk-width-1-1 uk-form-large" type="text" ref="event" placeholder="@lang('Add event...')">
+                            <div class="uk-dropdown uk-dropdown-scrollable uk-width-1-1" aria-expanded="true">
+
+                            </div>
                         </div>
                     </div>
 
                 </div>
 
-                <div class="uk-form-row">
-                    <button class="uk-button uk-button-large uk-button-primary uk-margin-small-right">@lang('Save')</button>
-                    <a href="@route('/webhooks')">@lang('Cancel')</a>
-                </div>
+                <cp-actionbar>
+                    <div class="uk-container uk-container-center">
+                        <button class="uk-button uk-button-large uk-button-primary">@lang('Save')</button>
+                        <a class="uk-button uk-button-large uk-button-link" href="@route('/webhooks')">@lang('Cancel')</a>
+                    </div>
+                </cp-actionbar>
 
             </div>
 
@@ -145,21 +160,35 @@
 
         this.webhook  = {{ json_encode($webhook) }};
         this.advanced = false;
+        this.triggers = {{ json_encode($triggers) }};
 
         this.on('mount', function(){
 
-            App.$(this.event).on('keydown', function(e) {
+            var src = this.triggers.map(function(trigger) {
+                return { value: trigger }
+            });
 
-                if (e.keyCode == 13) {
+            UIkit.autocomplete(App.$(this.refs.eventAutocomplete), {source: src}).on('selectitem.uk.autocomplete', function(e, data) {
+                $this.webhook.events.push(data.value.trim());
+
+                $this.webhook.events = _.uniq($this.webhook.events).sort();
+
+                setTimeout(function() {
+                    $this.refs.event.value = '';
+                }, 10);
+
+                $this.update();
+            });
+
+            App.$(this.refs.event).on('keydown', function(e) {
+
+                if (e.keyCode == 13 && $this.refs.event.value.trim()) {
                     e.preventDefault();
 
-                    if ($this.webhook.events.indexOf($this.event.value.trim()) != -1) {
-                        App.ui.notify("Event already exists");
-                    } else {
-                        $this.webhook.events.push($this.event.value.trim());
-                    }
+                    $this.webhook.events.push($this.refs.event.value.trim());
+                    $this.webhook.events = _.uniq($this.webhook.events).sort();
 
-                    $this.event.value = '';
+                    $this.refs.event.value = '';
                     $this.update();
 
                     return false;
@@ -179,7 +208,9 @@
             this.webhook.events.splice(evt.item.idx, 1);
         }
 
-        submit() {
+        submit(e) {
+
+            if(e) e.preventDefault();
 
             App.request('/webhooks/save', {webhook: this.webhook}).then(function(data) {
 

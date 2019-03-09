@@ -1,60 +1,17 @@
 <?php
-
-// ACL
-$app("acl")->addResource("collections", ['create', 'delete']);
-
-$this->module("collections")->extend([
-
-    'getCollectionsInGroup' => function($group = null, $extended = false) {
-
-        if (!$group) {
-            $group = $this->app->module('cockpit')->getGroup();
-        }
-
-        $_collections = $this->collections($extended);
-        $collections = [];
-
-        if ($this->app->module('cockpit')->isSuperAdmin()) {
-            return $_collections;
-        }
-
-        foreach ($_collections as $collection => $meta) {
-
-            if (isset($meta['acl'][$group]['entries_view']) && $meta['acl'][$group]['entries_view']) {
-                $collections[$collection] = $meta;
-            }
-        }
-
-        return $collections;
-    },
-
-    'hasaccess' => function($collection, $action, $group = null) {
-
-        $collection = $this->collection($collection);
-
-        if (!$collection) {
-            return false;
-        }
-
-        if ($this->app->module('cockpit')->isSuperAdmin()) {
-            return true;
-        }
-
-        if (!$group) {
-            $group = $this->app->module('cockpit')->getGroup();
-        }
-
-        if (isset($collection['acl'][$group][$action])) {
-            return $collection['acl'][$group][$action];
-        }
-
-        return false;
-    }
-]);
+/**
+ * This file is part of the Cockpit project.
+ *
+ * (c) Artur Heinze - 🅰🅶🅴🅽🆃🅴🅹🅾, http://agentejo.com
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
 
 $app->on('admin.init', function() {
 
     $this->helper('admin')->addAssets('collections:assets/field-collectionlink.tag');
+    $this->helper('admin')->addAssets('collections:assets/link-collectionitem.js');
 
     if (!$this->module('cockpit')->getGroupRights('collections') && !$this->module('collections')->getCollectionsInGroup()) {
 
@@ -70,7 +27,7 @@ $app->on('admin.init', function() {
     $this->bindClass('Collections\\Controller\\Admin', 'collections');
 
     // add to modules menu
-    $this('admin')->addMenuItem('modules', [
+    $this->helper('admin')->addMenuItem('modules', [
         'label' => 'Collections',
         'icon'  => 'collections:icon.svg',
         'route' => '/collections',
@@ -112,7 +69,7 @@ $app->on('admin.init', function() {
     // dashboard widgets
     $this->on("admin.dashboard.widgets", function($widgets) {
 
-        $collections = $this->module("collections")->getCollectionsInGroup(null, true);
+        $collections = $this->module("collections")->getCollectionsInGroup(null, false);
 
         $widgets[] = [
             "name"    => "collections",
@@ -121,4 +78,28 @@ $app->on('admin.init', function() {
         ];
 
     }, 100);
+
+    // register events for autocomplete
+    $this->on('cockpit.webhook.events', function($triggers) {
+
+        foreach([
+            'collections.createcollection',
+            'collections.find.after',
+            'collections.find.after.{$name}',
+            'collections.find.before',
+            'collections.find.before.{$name}',
+            'collections.remove.after',
+            'collections.remove.after.{$name}',
+            'collections.remove.before',
+            'collections.remove.before.{$name}',
+            'collections.removecollection',
+            'collections.removecollection.{$name}',
+            'collections.save.after',
+            'collections.save.after.{$name}',
+            'collections.save.before',
+            'collections.save.before.{$name}',
+            'collections.updatecollection',
+            'collections.updatecollection.{$name}'
+        ] as &$evt) { $triggers[] = $evt; }
+    });
 });

@@ -1,4 +1,12 @@
 <?php
+/**
+ * This file is part of the Cockpit project.
+ *
+ * (c) Artur Heinze - 🅰🅶🅴🅽🆃🅴🅹🅾, http://agentejo.com
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
 
 namespace Lime\Helper;
 
@@ -547,15 +555,36 @@ class I18n extends \Lime\Helper {
      */
     public function get($key, $alternative=null, $lang=null){
 
-        if(!$lang) {
+        if (!$lang) {
             $lang = $this->locale;
         }
 
-        if(!$alternative){
+        if (!$alternative){
             $alternative = $key;
         }
 
         return isset($this->_languages[$lang][$key]) ? $this->_languages[$lang][$key]:$alternative;
+    }
+
+    /**
+     * Get translated string by key and params
+     *
+     * @param   string $key translation key
+     * @param   array $params
+     * @param   array $alternative  returns if $key doesn''t exist
+     * @return  string
+     */
+    public function getstr($key, $params=[], $alternative=null, $lang=null){
+
+        if (!$lang) {
+            $lang = $this->locale;
+        }
+
+        if (!$alternative){
+            $alternative = $key;
+        }
+
+        return vsprintf(isset($this->_languages[$lang][$key]) ? $this->_languages[$lang][$key]:$alternative, $params);
     }
 
 
@@ -567,13 +596,13 @@ class I18n extends \Lime\Helper {
      */
     public function load($langfile, $lang=null) {
 
-        if(!$lang) {
+        if (!$lang) {
             $lang = $this->locale;
         }
 
-        if($path = $this->app->path($langfile)){
+        if ($path = $this->app->path($langfile)){
 
-            if(!isset($this->_languages[$lang])){
+            if (!isset($this->_languages[$lang])){
                 $this->_languages[$lang] = array();
             }
 
@@ -594,7 +623,7 @@ class I18n extends \Lime\Helper {
      */
     public function data($lang=null) {
 
-        if($lang) {
+        if ($lang) {
             return isset($this->_languages[$lang]) ? $this->_languages[$lang] : array();
         }
 

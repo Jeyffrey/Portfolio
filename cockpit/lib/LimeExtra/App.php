@@ -1,4 +1,12 @@
 <?php
+/**
+ * This file is part of the Cockpit project.
+ *
+ * (c) Artur Heinze - 🅰🅶🅴🅽🆃🅴🅹🅾, http://agentejo.com
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
 
 namespace LimeExtra;
 
@@ -68,7 +76,9 @@ class App extends \Lime\App {
             return $renderer;
         });
 
-        $this("session")->init();
+        if ($this->retrieve('session.init', true)) {
+            $this('session')->init();
+        }
     }
 
 
@@ -80,10 +90,16 @@ class App extends \Lime\App {
     */
     public function view($template, $slots = []) {
 
+        $this->trigger('app.render.view', [&$template, &$slots]);
+
+        if (is_string($template) && $template) {
+            $this->trigger("app.render.view/{$template}", [&$template, &$slots]);
+        }
+
         $renderer     = $this->renderer;
         $olayout      = $this->layout;
 
-        $slots         = array_merge($this->viewvars, $slots);
+        $slots        = array_merge($this->viewvars, $slots);
         $layout       = $olayout;
 
         $this->layout = false;

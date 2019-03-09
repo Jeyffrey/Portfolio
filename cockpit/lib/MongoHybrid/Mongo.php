@@ -1,8 +1,14 @@
 <?php
+/**
+ * This file is part of the Cockpit project.
+ *
+ * (c) Artur Heinze - 🅰🅶🅴🅽🆃🅴🅹🅾, http://agentejo.com
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
 
 namespace MongoHybrid;
-
-include_once(__DIR__.'/../MongoDB/functions.php');
 
 class Mongo {
 
@@ -10,9 +16,13 @@ class Mongo {
     protected $db;
     protected $options;
 
-    public function __construct($server, $options=[]) {
+    public function __construct($server, $options=[], $driverOptions=[]) {
 
-        $this->client  = new \MongoDB\Client($server, $options, ['typeMap' => ['root' => 'array', 'document' => 'array', 'array' => 'array']]);
+        $driverOptions = array_merge([
+            'typeMap' => ['root' => 'array', 'document' => 'array', 'array' => 'array']
+        ], $driverOptions);
+
+        $this->client  = new \MongoDB\Client($server, $options, $driverOptions);
         $this->db      = $this->client->selectDatabase($options["db"]);
         $this->options = $options;
     }
@@ -28,6 +38,17 @@ class Mongo {
         return $this->db->selectCollection($name);
     }
 
+    public function dropCollection($name, $db = null){
+
+        if ($db) {
+            $name = "{$db}/{$name}";
+        }
+
+        $name = str_replace('/', '_', $name);
+
+        return $this->db->dropCollection($name);
+    }
+
     public function findOneById($collection, $id){
 
         if (is_string($id)) $id = new \MongoDB\BSON\ObjectID($id);
@@ -40,6 +61,8 @@ class Mongo {
     }
 
     public function findOne($collection, $filter = [], $projection = []) {
+
+        if (!$filter) $filter = [];
 
         $filter = $this->_fixMongoIds($filter);
         $doc    = $this->getCollection($collection)->findOne($filter, ['projection' => $projection]);
@@ -85,6 +108,15 @@ class Mongo {
 
     public function insert($collection, &$doc) {
 
+        if (isset($doc[0])) {
+
+            foreach($doc as &$d) {
+                $this->insert($collection, $d);
+            }
+
+            return $doc;
+        }
+
         $doc = $this->_fixMongoIds($doc);
         $ref = $doc;
 
@@ -129,6 +161,8 @@ class Mongo {
 
     public function remove($collection, $filter=[]) {
 
+        if (!$filter) $filter = [];
+
         $filter = $this->_fixMongoIds($filter);
 
         return $this->getCollection($collection)->deleteMany($filter);
@@ -136,9 +170,13 @@ class Mongo {
 
     public function count($collection, $filter=[]) {
 
+        if (!$filter) $filter = [];
+
+        $filter = $this->_fixMongoIds($filter);
+
         return $this->getCollection($collection)->count($filter);
     }
-    
+
     protected function _fixMongoIds(&$data) {
 
         if (!is_array($data)) {
@@ -146,7 +184,7 @@ class Mongo {
         }
 
         foreach ($data as $k => $v) {
-            
+
             if (is_array($data[$k])) {
                 $data[$k] = $this->_fixMongoIds($data[$k]);
             }
@@ -154,12 +192,21 @@ class Mongo {
             if ($k === '_id') {
 
                 if (is_string($v)) {
-                    
                     $v = new \MongoDB\BSON\ObjectID($v);
+                }
 
-                } elseif (is_array($v) && isset($v['$in'])) {
-                    
+                if (is_array($v) && isset($v['$in'])) {
+
                     foreach ($v['$in'] as &$id) {
+                        if (is_string($id)) {
+                            $id = new \MongoDB\BSON\ObjectID($id);
+                        }
+                    }
+                }
+
+                if (is_array($v) && isset($v['$nin'])) {
+
+                    foreach ($v['$nin'] as &$id) {
                         if (is_string($id)) {
                             $id = new \MongoDB\BSON\ObjectID($id);
                         }
