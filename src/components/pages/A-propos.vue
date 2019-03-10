@@ -12,12 +12,12 @@
         name: 'aprop-single',
         data () {
             return {
-                state: store.state.aboutpage,
+                state: store.state,
                 slug: this.$route.params.slug
             }
         },
         computed: {
-            content () { return this.state.Contenu }
+            content () { return this.state.aboutpage }
         },
         created () {
             store.fetchApropos( this.slug )

@@ -1,0 +1,40 @@
+.darkmode {
+	#header	 {
+		background-color: $c-dark;
+
+		a {
+			color: white;
+		}
+	}
+
+	#main {
+		background-color: $c-dark-d;
+	}
+
+	// Items projet
+	.item-projet:nth-child(even) {
+		background-color: $c-dark;
+	}
+
+	.item-projet--date,
+	.item-projet--titre,
+	.item-projet--dev li.on span {
+		color: #ccc;
+	}
+
+	.item-projet--tags li span {
+		color: $c-dark;
+	}
+
+	.link:before {
+        border-color: transparent transparent $c-main-d transparent;
+	}
+	.link:after {
+		background-color: $c-main-d;
+	}
+
+	// Footer
+	#footer {
+		background-color: $c-dark;
+	}
+}

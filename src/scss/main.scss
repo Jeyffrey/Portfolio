@@ -5,8 +5,11 @@
 
 @import './statics/en-tete.scss';
 @import './statics/footer.scss';
+@import './statics/toggle-mode.scss';
 
 @import './pages/projets-category.scss';
 @import './pages/single.scss';
 
 @import './responsive/responsive.scss';
+
+@import './darkmode/darkmode.scss';
