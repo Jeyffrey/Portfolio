@@ -80,6 +80,8 @@
 
 .header--menu {
     ul {
+		display: flex;
+		align-items: center;
         list-style: none;
         padding-left: 0;
         margin: 0;
@@ -87,8 +89,6 @@
     }
 
     li {
-        display: inline-block;
-
         &:not(:last-of-type) {
             margin-right: 18px;
         }
@@ -99,15 +99,19 @@
     }
 
     .twitter a {
-        display: inline-block;
-        vertical-align: -1px;
-        width: 16px;
-        height: 13px;
-        background-image: url(/src/img/twitter.png);
-        background-size: 100% auto;
+		width: 16px;
+		margin-top: -2px;
 
-        &:hover {
-            background-position: bottom;
-        }
+		svg {
+			width: 100%;
+			
+			path {
+				fill: #555;
+			}
+		}
+
+		&:hover svg path {
+			fill: $c-main-d;
+		}
     }
 }

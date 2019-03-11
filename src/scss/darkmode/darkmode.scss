@@ -1,9 +1,33 @@
 .darkmode {
+	#toggle-mode {
+		button {
+			background-color: #ccc;
+		}
+
+		.notification {
+			color: $c-main;
+		}
+	}
+
 	#header	 {
 		background-color: $c-dark;
 
 		a {
 			color: white;
+
+			&:hover {
+				color: $c-main;
+			}
+		}
+	}
+
+	.header--menu .twitter a {
+		svg path {
+			fill: #ddd;
+		}
+
+		&:hover svg path {
+			fill: $c-main;
 		}
 	}
 
@@ -23,7 +47,8 @@
 	}
 
 	.item-projet--tags li span {
-		color: $c-dark;
+		background-color: #bbb;
+		color: $c-dark-d;
 	}
 
 	.link:before {
@@ -35,6 +60,11 @@
 
 	// Footer
 	#footer {
+		color: #ccc;
 		background-color: $c-dark;
+
+		a {
+			color: $c-main;
+		}
 	}
 }

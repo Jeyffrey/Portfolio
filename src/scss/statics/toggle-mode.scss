@@ -14,7 +14,9 @@
 		border-radius: 50%;
 		cursor: pointer;
 
-		&:hover {
+		&:hover,
+		&:focus {
+			outline: none;
 			background-color: $c-main;
 		}
 
@@ -24,6 +26,26 @@
 			transform: translate(-50%, -50%);
 			width: 50%;
 			height: auto;
+		}
+	}
+
+	.notification {
+		position: absolute;
+		bottom: 3.5rem;
+		right: -0.5rem;
+		color: $c-main-d;
+		font-size: 0.75rem;
+		font-weight: 400;
+		white-space: nowrap;
+
+		&.fade-enter-active,
+		&.fade-leave-active {
+			transition: all .3s;
+		}
+		&.fade-enter,
+		&.fade-leave-to {
+			opacity: 0;
+			transform: translateY(10px);
 		}
 	}
 }

@@ -1,6 +1,6 @@
 <template lang="html">
 	<div id="toggle-mode">
-		<button @click="toggle()" title="Dark mode">
+		<button @click="toggle()" :title="[ darkMode == true ? 'Désactiver le mode nuit' : 'Activer le mode nuit' ]">
 			<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
 	 viewBox="0 0 480 480" xml:space="preserve">
 				<g>
@@ -11,6 +11,10 @@
 				</g>
 			</svg>
 		</button>
+
+		<transition name="fade">
+			<div class="notification" v-show="showNotif">Préférence sauvegardée&nbsp;!</div>
+		</transition>
 	</div>
 </template>
 
@@ -19,12 +23,13 @@ export default {
 	name: 'toggle-mode',
 	data () {
 		return {
-			darkMode: false
+			darkMode: false,
+			showNotif: false,
+			timeoutNotif: false
 		}
 	},
 	created () {
 		if ( localStorage.getItem('darkMode') == null ) {
-			console.log('null')
 			this.darkMode = false;
 			localStorage['darkMode'] = this.darkMode;
 		} else {
@@ -35,6 +40,21 @@ export default {
 	},
 	methods: {
 		toggle: function () {
+			this.$el.querySelector('button').blur(); // On retire le focus du button
+
+			this.showNotif = true;
+
+			if ( !this.timeoutNotif ) {
+				this.timeoutNotif = window.setTimeout(() => {
+					this.showNotif = false;
+				}, 1500);
+			} else {
+				window.clearTimeout(this.timeoutNotif);
+				this.timeoutNotif = window.setTimeout(() => {
+					this.showNotif = false;
+				}, 1500);
+			}
+
 			this.darkMode = ! JSON.parse(this.darkMode);
 
 			if ( localStorage.getItem('darkMode') == null ) {
