@@ -9,7 +9,7 @@
 		background-color: $c-dark;
 
 		a {
-			color: white;
+			color: #ccc;
 
 			&:hover {
 				color: $c-main;
@@ -52,6 +52,11 @@
 	}
 	.link:after {
 		background-color: $c-main-d;
+	}
+
+	// Singles pages
+	.single {
+		color: #ccc;
 	}
 
 	// Footer
