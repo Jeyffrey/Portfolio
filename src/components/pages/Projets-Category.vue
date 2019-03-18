@@ -31,7 +31,7 @@
 
                 <a v-else :href="projet.URL" target="_blank">
                     <div class="cell date">
-                        <time class="item-projet--date">{{ projet.Année }}</time>
+                        <time class="item-projet--date">{{ projet.Annee }}</time>
                     </div>
 
                     <div class="cell titre">
@@ -51,7 +51,7 @@
                     </div>
 
                     <div class="cell bouton">
-                        <a class="link external" :href="projet.URL"></a>
+                        <a class="link external" :href="projet.URL" target="_blank" rel="noopener"></a>
                     </div>
                 </a>
             </article>

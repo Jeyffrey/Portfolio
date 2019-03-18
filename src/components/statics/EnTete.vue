@@ -2,7 +2,7 @@
     <header id="header">
         <div class="header--breadcrumbs">
             <div class="header--titre-site">
-                <router-link :to="{ name: 'projets' }">Jeyffrey</router-link>
+                <router-link :to="{ name: 'projets' }">Geoffroy B.</router-link>
             </div>
 
             <transition name="breadcrumbs" mode="out-in" appear>
