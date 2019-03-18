@@ -11,7 +11,8 @@ body {
 
 
 #main {
-    min-height: calc(100vh - 11.35em);
+	min-height: calc(100vh - 11.35em);
+	padding-bottom: 2rem;
 
     .wrapper {
         position: relative;

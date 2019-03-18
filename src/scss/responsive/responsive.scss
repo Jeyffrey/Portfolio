@@ -56,17 +56,25 @@
 
         .header--menu {
             padding: 10px;
-            background-color: #f8f8f8;
+			background-color: #f8f8f8;
+			
+			ul {
+				justify-content: center;
+			}
 
             a {
                 line-height: 2;
             }
         }
-    }
+	}
+	
+	.darkmode #header .header--menu {
+		background-color: $c-dark-d;
+	}
 
     #main {
-        margin: 0 0 15px;
-    }
+		margin: 0;
+	}	
 
     .titre-principal {
         margin: 0;
@@ -117,5 +125,18 @@
 
     .single .contenu {
         margin: 50px 0 0;
-    }
+	}
+	
+	/* -- Footer -- */
+	#footer {
+		padding: 3rem 1rem 4rem;
+	}
+
+	/* -- Dark mode -- */
+	#toggle-mode {
+		position: fixed;
+		z-index: 99;
+		bottom: 1rem;
+		right: 1rem;
+	}
 }
