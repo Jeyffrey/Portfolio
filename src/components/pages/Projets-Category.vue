@@ -5,7 +5,7 @@
             <article v-for="projet in projets" class="item-projet">
                 <router-link v-if="projet.CaseStudy" :to="{ name: 'projet-single', params: { slug: projet.Slug }}">
                     <div class="cell date">
-                        <time class="item-projet--date">{{ projet.Année }}</time>
+                        <time class="item-projet--date">{{ projet.Annee }}</time>
                     </div>
 
                     <div class="cell titre">

@@ -7,7 +7,7 @@
 
             <transition name="breadcrumbs" mode="out-in" appear>
                 <ol v-if="breadcrumbs">
-                    <li class="list-complete-item" v-for="(item, index) in breadcrumbs" key="{{item.titre}}">
+                    <li class="list-complete-item" v-for="(item, index) in breadcrumbs">
                         <router-link
                         v-if="item.link"
                         :to="{ name: item.link }">{{item.titre}}</router-link>

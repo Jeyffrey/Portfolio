@@ -11,7 +11,7 @@
 
             <ul class="projet-galerie">
                 <li v-for="image in projet.Galerie">
-                    <img :src="'/' + image.path" :alt="image.meta.title">
+                    <img :src="origin + image.path" :alt="image.meta.title">
                 </li>
             </ul>
 
@@ -30,7 +30,8 @@
         data () {
             return {
                 state: store.state.projets,
-                slug: this.$route.params.slug
+				slug: this.$route.params.slug,
+				origin: window.location.origin
             }
         },
         computed: {
